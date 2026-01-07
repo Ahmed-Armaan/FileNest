@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Audiowide&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #10172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #e5e7eb;
+  --text-secondary: #94a3b8;
+  --accent-primary: #38bdf8;
+  --accent-hover: #0ea5e9;
+  --border-primary: #334155;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+}
+
+.light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --accent-primary: #0284c7;
+  --accent-hover: #0369a1;
+  --border-primary: #cbd5e1;
+  --success: #16a34a;
+  --warning: #d97706;
+  --error: #dc2626;
+}
