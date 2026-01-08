@@ -8,6 +8,10 @@ const router = createBrowserRouter([
     element: <LandingPage />
   },
   {
+    path: "/home",
+    element: <div>Home</div>,
+  },
+  {
     path: "*",
     element: <LandingPage />
   }
