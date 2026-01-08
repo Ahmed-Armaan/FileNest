@@ -28,3 +28,9 @@
   --warning: #d97706;
   --error: #dc2626;
 }
+
+.theme_applier {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}

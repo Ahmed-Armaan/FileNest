@@ -19,6 +19,7 @@ func JWTinit() {
 	jwtSecret = []byte(secret)
 }
 
+// jwt subject uses google sub for authentication
 func SignJwt(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"iss": "filenest",

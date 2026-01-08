@@ -1,8 +1,10 @@
 package auth
 
 import (
+	"net/http"
 	"os"
 
+	"github.com/Ahmed-Armaan/FileNest/database"
 	"github.com/Ahmed-Armaan/FileNest/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -52,13 +54,17 @@ func GetCredentials(c *gin.Context) {
 		return
 	}
 
-	// TODO: save userifo in DB and send a jwt token
+	if err := database.InsertUser(userInfo.Name, userInfo.Sub, userInfo.Email, userInfo.Picture); err != nil {
+		c.Redirect(http.StatusInternalServerError, frontendUrl+"/?error=database_error")
+		return
+	}
+
 	jwtToken, err := utils.SignJwt(userInfo.Sub)
 	if err != nil {
 		c.Redirect(302, frontendUrl+"/?error=response_construction_error")
 		return
 	}
 
-	c.SetCookie("session", jwtToken, -1, "", frontendUrl, false, true)
-	c.Redirect(200, frontendUrl+"/home")
+	c.SetCookie("session", jwtToken, 60*60*24*7, "", "", false, true)
+	c.Redirect(303, frontendUrl+"/home")
 }
