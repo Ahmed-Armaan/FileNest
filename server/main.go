@@ -13,6 +13,7 @@ import (
 	"github.com/Ahmed-Armaan/FileNest/handlers/auth"
 	"github.com/Ahmed-Armaan/FileNest/handlers/files"
 	"github.com/Ahmed-Armaan/FileNest/handlers/middleware"
+	"github.com/Ahmed-Armaan/FileNest/storage"
 )
 
 func main() {
@@ -22,6 +23,9 @@ func main() {
 	}
 
 	if err := database.DbInit(); err != nil {
+		log.Fatalln(err)
+	}
+	if err := storage.S3Init(); err != nil {
 		log.Fatalln(err)
 	}
 	runServer()
@@ -35,12 +39,16 @@ func runServer() {
 		AllowCredentials: true,
 	}))
 
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "pong"})
+	})
 	r.GET("/auth/callback", auth.GetCredentials)
 
 	api := r.Group("/api")
 	api.Use(middleware.VerifyJwt())
 	api.GET("/me", handlers.Me)
 	api.GET("/get_elements", files.GetCurrDirElements)
+	api.GET("/upload", storage.GetUploadUrl)
 
 	err := r.Run()
 	if err != nil {

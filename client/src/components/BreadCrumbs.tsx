@@ -9,31 +9,46 @@ interface BreadCrumbsPropsType {
 
 function BreadCrumbs(props: BreadCrumbsPropsType) {
   return (
-    <>
-      <div className="flex gap-2 border-b-1">
-        <div className="
-          flex items-center justify-center w-9 h-9 rounded-full m-2
+    <div className="flex items-center gap-2 border-b border-gray-300 px-3 py-2">
+
+      {/* back button */}
+      <button
+        onClick={props.currPathBack}
+        className="
+          flex items-center justify-center w-9 h-9 rounded-full
           border border-gray-300
-          hover:bg-gray-100 hover:text-gray-900
+          hover:bg-gray-100
           active:scale-95
           transition
-          "
-          onClick={() => props.currPathBack}>
-          <IoMdArrowRoundBack />
-        </div>
+        "
+      >
+        <IoMdArrowRoundBack />
+      </button>
 
-        <div>
-          {
-            props.currPath.map((dir) => {
-              return <span id={dir.id} className="underline cursor-pointer"
-                onClick={() => props.currPathSet(dir.id)}>
-                {`${dir.name}/`}
-              </span>
-            })
-          }
-        </div>
+      {/* path */}
+      <div className="flex items-center gap-1 overflow-x-auto">
+        {props.currPath.map((dir, idx) => (
+          <span key={dir.id || idx} className="flex items-center gap-1">
+
+            <span
+              onClick={() => props.currPathSet(dir.id)}
+              className="
+                cursor-pointer
+                text-sm
+                hover:underline
+                whitespace-nowrap
+              "
+            >
+              {dir.name || "root"}
+            </span>
+
+            {idx !== props.currPath.length - 1 && (
+              <span className="text-gray-400">/</span>
+            )}
+          </span>
+        ))}
       </div>
-    </>
+    </div>
   )
 }
 
