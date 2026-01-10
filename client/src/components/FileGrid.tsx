@@ -20,12 +20,12 @@ function FileGrid() {
     })
   }
 
-  const currPathAdd = (nextDir: FileMEtaData) => {
-    setCurrPath(currPath => {
-      currPath = [...currPath, nextDir]
-      return currPath
-    })
-  }
+  //  const currPathAdd = (nextDir: FileMEtaData) => {
+  //    setCurrPath(currPath => {
+  //      currPath = [...currPath, nextDir]
+  //      return currPath
+  //    })
+  //  }
 
   const currPathSet = (newDirId: string) => {
     var newPath: FileMEtaData[] = []

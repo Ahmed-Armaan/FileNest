@@ -1,4 +1,5 @@
 function SideBar(props: { currDirId: string }) {
+  console.log(props.currDirId)
 
   const uploadFile = async (file: File) => {
     const res = await fetch(
