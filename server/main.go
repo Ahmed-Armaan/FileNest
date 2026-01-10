@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -19,7 +20,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error: Cant load env file\n%s", err)
+		fmt.Println("No .env found, relying on enviornment variables") // in production .env is not present
 	}
 
 	if err := database.DbInit(); err != nil {
