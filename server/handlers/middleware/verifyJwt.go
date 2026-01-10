@@ -48,6 +48,7 @@ func VerifyJwt() gin.HandlerFunc {
 			return
 		}
 
+		c.Set("userId", user.ID)
 		c.Set("username", user.UserName)
 		c.Set("profile", user.ProfileImage)
 		c.Set("email", user.Email)

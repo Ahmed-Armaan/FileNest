@@ -11,6 +11,7 @@ import (
 	"github.com/Ahmed-Armaan/FileNest/database"
 	"github.com/Ahmed-Armaan/FileNest/handlers"
 	"github.com/Ahmed-Armaan/FileNest/handlers/auth"
+	"github.com/Ahmed-Armaan/FileNest/handlers/files"
 	"github.com/Ahmed-Armaan/FileNest/handlers/middleware"
 )
 
@@ -35,7 +36,11 @@ func runServer() {
 	}))
 
 	r.GET("/auth/callback", auth.GetCredentials)
-	r.GET("/me", middleware.VerifyJwt(), handlers.Me)
+
+	api := r.Group("/api")
+	api.Use(middleware.VerifyJwt())
+	api.GET("/me", handlers.Me)
+	api.GET("/get_elements", files.GetCurrDirElements)
 
 	err := r.Run()
 	if err != nil {

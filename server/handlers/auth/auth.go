@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"net/http"
 	"os"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
@@ -54,8 +53,9 @@ func GetCredentials(c *gin.Context) {
 		return
 	}
 
-	if err := database.InsertUser(userInfo.Name, userInfo.Sub, userInfo.Email, userInfo.Picture); err != nil {
-		c.Redirect(http.StatusInternalServerError, frontendUrl+"/?error=database_error")
+	// insert new user into DB
+	if err = database.InsertUser(userInfo.Name, userInfo.Sub, userInfo.Email, userInfo.Picture); err != nil {
+		c.Redirect(303, frontendUrl+"/?error=database_error")
 		return
 	}
 

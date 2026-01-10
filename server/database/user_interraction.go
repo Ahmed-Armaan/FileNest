@@ -1,15 +1,16 @@
 package database
 
 import (
+	"github.com/Ahmed-Armaan/FileNest/database/helper"
 	"gorm.io/gorm"
 )
 
 func InsertUser(userName string, googleID string, email string, profileImage string) error {
-	if _, err := GetUserByGoogleID(googleID); err == nil {
-		return nil
-	} else if err != gorm.ErrRecordNotFound {
-		return err
-	}
+	//	if _, err := GetUserByGoogleID(googleID); err == nil {
+	//		return nil
+	//	} else if err != gorm.ErrRecordNotFound {
+	//		return err
+	//	}
 
 	user := &User{
 		UserName:     userName,
@@ -18,9 +19,28 @@ func InsertUser(userName string, googleID string, email string, profileImage str
 		ProfileImage: profileImage,
 	}
 
-	if err := DB.Create(&user).Error; err != nil {
+	//if err := DB.Create(&user).Error; err != nil {
+	//	return false, err, uuid.UUID{}
+	//}
+	//return true, nil, user.ID
+
+	// insert new user and create a root node, using transaction to achieve atomicity
+	if err := DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&user).Error; err != nil {
+			if helper.ResolvePostgresError(err) == helper.ErrUniqueViolation {
+				return nil
+			}
+			return err
+		}
+
+		if err := insertRootNode(tx, user.ID); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return err
 	}
+
 	return nil
 }
 

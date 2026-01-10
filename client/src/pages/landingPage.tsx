@@ -23,7 +23,7 @@ function LandingPage() {
     const checkLogin = async () => {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL}/me`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/me`,
           { credentials: "include" }
         )
 
@@ -41,8 +41,6 @@ function LandingPage() {
   const loginWithGoogle = () => {
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth")
     const scope = import.meta.env.VITE_OAUTH_SCOPE
-    console.log(`scople = ${scope}`)
-
     url.searchParams.append("client_id", import.meta.env.VITE_OAUTH_CLIENT_ID)
     url.searchParams.append("redirect_uri", import.meta.env.VITE_OAUTH_REDIRECT_URI)
     url.searchParams.append("response_type", "code")
