@@ -1,97 +1,99 @@
 import { useEffect, useState } from "react"
-import type { FileMEtaData } from "../types/types"
+import type { FileMetaData } from "../types/types"
 import SideBar from "./sideBar"
 import BreadCrumbs from "./BreadCrumbs"
+import { FileUploadContextProvider } from "../context/FileUploadContext"
 
 function FileGrid() {
-  const [currElements, setCurrElements] = useState<FileMEtaData[]>([])
-  const rootPath: FileMEtaData = {
-    id: "",
-    name: "",
-    type: "directory",
-    updatedAt: "",
-  }
-  const [currPath, setCurrPath] = useState<FileMEtaData[]>([rootPath])
+	const [currElements, setCurrElements] = useState<FileMetaData[]>([])
+	const rootPath: FileMetaData = {
+		id: "",
+		name: "",
+		type: "directory",
+		updatedAt: "",
+	}
+	const [currPath, setCurrPath] = useState<FileMetaData[]>([rootPath])
 
-  const currPathBack = () => {
-    setCurrPath(currPath => {
-      currPath.pop()
-      return currPath
-    })
-  }
+	const currPathBack = () => {
+		setCurrPath(currPath => {
+			currPath.pop()
+			return currPath
+		})
+	}
 
-  //  const currPathAdd = (nextDir: FileMEtaData) => {
-  //    setCurrPath(currPath => {
-  //      currPath = [...currPath, nextDir]
-  //      return currPath
-  //    })
-  //  }
+	//  const currPathAdd = (nextDir: FileMetaData) => {
+	//    setCurrPath(currPath => {
+	//      currPath = [...currPath, nextDir]
+	//      return currPath
+	//    })
+	//  }
 
-  const currPathSet = (newDirId: string) => {
-    var newPath: FileMEtaData[] = []
+	const currPathSet = (newDirId: string) => {
+		var newPath: FileMetaData[] = []
 
-    setCurrPath(currPath => {
-      for (const dir of currPath) {
-        newPath = [...newPath, dir]
-        if (dir.id === newDirId) break
-      }
-      return newPath
-    })
-  }
+		setCurrPath(currPath => {
+			for (const dir of currPath) {
+				newPath = [...newPath, dir]
+				if (dir.id === newDirId) break
+			}
+			return newPath
+		})
+	}
 
-  useEffect(() => {
-    fetchRootElements()
-  }, [currPath])
+	useEffect(() => {
+		fetchRootElements()
+	}, [currPath])
 
-  const fetchRootElements = async () => {
-    try {
-      const reqUrl = new URL(`${import.meta.env.VITE_OAUTH_REDIRECT_URI}/api/get_elements`)
-      reqUrl.searchParams.append("parentId", currPath[currPath.length - 1].id)
+	const fetchRootElements = async () => {
+		try {
+			const reqUrl = new URL(`${import.meta.env.VITE_OAUTH_REDIRECT_URI}/api/get_elements`)
+			reqUrl.searchParams.append("parentId", currPath[currPath.length - 1].id)
 
-      const res = await fetch(reqUrl.toString(), {
-        credentials: "include",
-      })
+			const res = await fetch(reqUrl.toString(), {
+				credentials: "include",
+			})
 
-      if (!res.ok) {
-        // show error!!
-      }
+			if (!res.ok) {
+				// show error!!
+			}
 
-      const data: FileMEtaData[] = await res.json()
-      setCurrElements(data)
-    }
-    catch (err) {
-      console.log(err)
-    }
+			const data: FileMetaData[] = await res.json()
+			setCurrElements(data)
+		}
+		catch (err) {
+			console.log(err)
+		}
 
-  }
+	}
 
-  return (
-    <>
-      <div className="flex flex-row m-5 border-1 grow">
-        {/* files */}
-        <div className="w-4/5">
-          <div>
-            <BreadCrumbs currPath={currPath} currPathBack={currPathBack} currPathSet={currPathSet} />
-          </div>
+	return (
+		<FileUploadContextProvider>
+			<div className="max-h-screen flex flex-row border grow">
 
-          <div>
-            <ul>
-              {
-                currElements.map((ele) => {
-                  return <li key={ele.id}>{`${ele.type} - ${ele.name}`}</li>
-                })
-              }
-            </ul>
-          </div>
-        </div>
+				{/* files */}
+				<div className="flex-4">
+					<div>
+						<BreadCrumbs currPath={currPath} currPathBack={currPathBack} currPathSet={currPathSet} />
+					</div>
 
-        {/* side bar */}
-        <div className="w-1/5">
-          <SideBar currDirId={currPath[currPath.length - 1].id} />
-        </div>
-      </div>
-    </>
-  )
+					<div>
+						<ul>
+							{
+								currElements.map((ele) => {
+									return <li key={ele.id}>{`${ele.type} - ${ele.name}`}</li>
+								})
+							}
+						</ul>
+					</div>
+				</div>
+
+				{/* side bar */}
+				<div className="flex-1">
+					<SideBar currDirId={currPath[currPath.length - 1].id} />
+				</div>
+			</div>
+		</FileUploadContextProvider>
+	)
 }
 
 export default FileGrid

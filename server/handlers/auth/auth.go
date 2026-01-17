@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
@@ -53,18 +54,27 @@ func GetCredentials(c *gin.Context) {
 		return
 	}
 
-	// insert new user into DB
-	if err = database.InsertUser(userInfo.Name, userInfo.Sub, userInfo.Email, userInfo.Picture); err != nil {
-		c.Redirect(303, frontendUrl+"/?error=database_error")
-		return
+	// insert new users into the DB
+	if _, err = database.GetUserByGoogleID(userInfo.Sub); err != nil {
+		if err = database.InsertUser(userInfo.Name, userInfo.Sub, userInfo.Email, userInfo.Picture); err != nil {
+			c.Redirect(303, frontendUrl+"/?error=database_error")
+			return
+		}
 	}
 
+	//if err = database.InsertUser(userInfo.Name, userInfo.Sub, userInfo.Email, userInfo.Picture); err != nil {
+	//	c.Redirect(303, frontendUrl+"/?error=database_error")
+	//	return
+	//}
+
+	fmt.Println("Signing JWt")
 	jwtToken, err := utils.SignJwt(userInfo.Sub)
 	if err != nil {
 		c.Redirect(302, frontendUrl+"/?error=response_construction_error")
 		return
 	}
 
+	fmt.Println("setting cookies")
 	c.SetCookie("session", jwtToken, 60*60*24*7, "", "", false, true)
 	c.Redirect(303, frontendUrl+"/home")
 }

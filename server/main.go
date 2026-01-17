@@ -47,9 +47,9 @@ func runServer() {
 
 	api := r.Group("/api")
 	api.Use(middleware.VerifyJwt())
-	api.GET("/me", handlers.Me)
+	api.GET("/me", handlers.Me) // provide user their data
 	api.GET("/get_elements", files.GetCurrDirElements)
-	api.GET("/upload", storage.GetUploadUrl)
+	api.GET("/get_upload_url", storage.GetUploadUrl)
 
 	err := r.Run()
 	if err != nil {

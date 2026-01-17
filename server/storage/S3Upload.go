@@ -8,6 +8,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type test struct {
+	Name      string
+	Age       int
+	Something uuid.UUID
+}
+
 func GetUploadUrl(c *gin.Context) {
 	objectKey := "data/" + uuid.NewString()
 

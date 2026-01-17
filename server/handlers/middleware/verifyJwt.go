@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
@@ -19,6 +20,8 @@ func VerifyJwt() gin.HandlerFunc {
 			return
 		}
 
+		fmt.Printf("Got cookies = %v\n", cookies)
+
 		claims, err := utils.VerifyJwt(cookies)
 		if err != nil {
 			if err == jwt.ErrTokenExpired {
@@ -26,6 +29,7 @@ func VerifyJwt() gin.HandlerFunc {
 					"error": "token expired",
 				})
 			}
+			fmt.Printf("Auth Err : %v\n", err)
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 				"error": "Authentication information unavailable",
 			})

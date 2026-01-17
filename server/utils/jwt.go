@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -48,10 +49,12 @@ func VerifyJwt(tokenStr string) (jwt.MapClaims, error) {
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, errors.New("token expired")
 		}
+		fmt.Println("JWT cant parse, hmmmm")
 		return nil, errors.New("invalid token")
 	}
 
 	if !token.Valid {
+		fmt.Println("JWT can parse, hmmmm")
 		return nil, errors.New("invalid token")
 	}
 
