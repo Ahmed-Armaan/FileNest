@@ -49,7 +49,11 @@ func runServer() {
 	api.Use(middleware.VerifyJwt())
 	api.GET("/me", handlers.Me) // provide user their data
 	api.GET("/get_elements", files.GetCurrDirElements)
-	api.GET("/get_upload_url", storage.GetUploadUrl)
+
+	// using POST here to avoid caching.
+	// time limited urls are being generated here, they must not be cached
+	api.POST("/get_upload_url", storage.GetNewUploadUrl)
+	api.POST("/get_upload_url/parts", storage.GetUploadUrl)
 
 	err := r.Run()
 	if err != nil {

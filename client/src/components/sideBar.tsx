@@ -4,7 +4,7 @@ import UploadFile from "../utils/upload";
 import { useFileUploadContext, type FileUploadStatus } from "../context/FileUploadContext";
 
 function SideBar(props: { currDirId: string }) {
-	const { uploading, fileData, addFile, clearFiles, removeFile } = useFileUploadContext()
+	const { addFile, clearFiles, removeFile } = useFileUploadContext()
 
 	const [showUploader, toggleUploader] = useState<boolean>(false)
 	const [files, setFiles] = useState<File[]>([]);
@@ -15,42 +15,15 @@ function SideBar(props: { currDirId: string }) {
 
 		files.forEach((file) => {
 			const fileData: FileUploadStatus = addFile(file)
-			UploadFile(props.currDirId, fileData, addFile, clearFiles, removeFile)
+			UploadFile(fileData, removeFile, clearFiles, removeFile)
 		})
 	}, [startUpload])
-
-	// const uploadFile = async (file: File) => {
-	// 	const res = await fetch(
-	// 		`${import.meta.env.VITE_BACKEND_URL}/api/upload`,
-	// 		{ credentials: "include" }
-	// 	)
-	//
-	// 	if (!res.ok) return alert("Failed to get upload URL")
-	//
-	// 	const { uploadUrl } = await res.json()
-	//
-	// 	await fetch(uploadUrl, {
-	// 		method: "PUT",
-	// 		body: file,
-	// 	})
-	// }
 
 	return (
 		<div
 			className="flex flex-col h-full p-5 gap-3"
 			style={{ background: "var(--bg-secondary)" }}
 		>
-			{/*<div>
-				<input
-					type="file"
-					onChange={(e) => {
-						if (e.target.files?.[0]) {
-							uploadFile(e.target.files[0])
-						}
-					}}
-				/>
-			</div>*/}
-
 			<div>
 				<button
 					onClick={() => toggleUploader(!showUploader)}
@@ -60,7 +33,7 @@ function SideBar(props: { currDirId: string }) {
 			</div>
 
 			{showUploader && (
-				<DragAndDrop onFileUpload={setFiles} toggleUploader={toggleUploader} setStartUpload={setStartUpload} />
+				<DragAndDrop ParentId={props.currDirId} onFileUpload={setFiles} toggleUploader={toggleUploader} setStartUpload={setStartUpload} />
 			)}
 
 			<div>

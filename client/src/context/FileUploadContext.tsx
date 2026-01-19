@@ -1,9 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import type { UploadActionRes } from "../types/uploadTypes"
 
 export type FileUploadStatus = {
-	uploadId: string
+	Id: string
 	file: File
 	uploadedSize: number
+	uploadId: string
+	objectKey: string
 }
 
 interface FileUploadContextType {
@@ -12,6 +15,8 @@ interface FileUploadContextType {
 	addFile: (file: File) => FileUploadStatus
 	clearFiles: () => void
 	removeFile: (fileUpload: FileUploadStatus) => void
+	setUploadData: (fileData: FileUploadStatus, UploadData: UploadActionRes) => void
+	setUploadedSize: (fileData: FileUploadStatus, size: { uploadedSize: number }) => void
 }
 
 const FileUploadContext = createContext<FileUploadContextType | null>(null)
@@ -26,13 +31,37 @@ export function FileUploadContextProvider({ children }: { children: ReactNode })
 
 	const addFile = (file: File): FileUploadStatus => {
 		const newFileData: FileUploadStatus = {
-			uploadId: crypto.randomUUID(),
+			Id: crypto.randomUUID(),
 			file,
 			uploadedSize: 0,
+			uploadId: "",
+			objectKey: "",
 		}
 
 		setFileData(prev => [...prev, newFileData])
 		return newFileData
+	}
+
+	const setUploadData = (fileData: FileUploadStatus, UploadData: UploadActionRes) => {
+		setFileData((prev) =>
+			prev.map((item) =>
+				(item.Id === fileData.Id) ? {
+					...item,
+					...UploadData,
+				} : item
+			)
+		)
+	}
+
+	const setUploadedSize = (fileData: FileUploadStatus, size: { uploadedSize: number }) => {
+		setFileData((prev) =>
+			prev.map((item) =>
+				(item.Id === fileData.Id) ? {
+					...item,
+					...size,
+				} : item
+			)
+		)
 	}
 
 	const clearFiles = () => {
@@ -42,7 +71,7 @@ export function FileUploadContextProvider({ children }: { children: ReactNode })
 	const removeFile = (fileUpload: FileUploadStatus) => {
 		setFileData((prev) => {
 			return prev.filter((fileUploadItem) => {
-				return fileUploadItem.uploadId !== fileUpload.uploadId
+				return fileUploadItem.Id !== fileUpload.Id
 			})
 		})
 	}
@@ -55,6 +84,8 @@ export function FileUploadContextProvider({ children }: { children: ReactNode })
 				addFile: addFile,
 				clearFiles: clearFiles,
 				removeFile: removeFile,
+				setUploadData: setUploadData,
+				setUploadedSize: setUploadedSize,
 			}}>
 			{children}
 		</FileUploadContext.Provider>
