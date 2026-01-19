@@ -1,8 +1,8 @@
-import type { FileMEtaData } from "../types/types";
 import { IoMdArrowRoundBack } from "react-icons/io";
+import type { FileMetaData } from "../types/types";
 
 interface BreadCrumbsPropsType {
-	currPath: FileMEtaData[],
+	currPath: FileMetaData[],
 	currPathBack: () => void,
 	currPathSet: (newDirId: string) => void,
 }
