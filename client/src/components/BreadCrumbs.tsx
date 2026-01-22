@@ -1,10 +1,10 @@
 import { IoMdArrowRoundBack } from "react-icons/io";
-import type { FileMetaData } from "../types/types";
+import type { TakenPath } from "./FileGrid";
 
 interface BreadCrumbsPropsType {
-	currPath: FileMetaData[],
+	currPath: TakenPath[],
 	currPathBack: () => void,
-	currPathSet: (newDirId: string) => void,
+	currPathSet: (Node: TakenPath) => void,
 }
 
 function BreadCrumbs(props: BreadCrumbsPropsType) {
@@ -15,31 +15,27 @@ function BreadCrumbs(props: BreadCrumbsPropsType) {
 			<button
 				onClick={props.currPathBack}
 				className="
-          flex items-center justify-center w-9 h-9 rounded-full
-          border border-gray-300
-          hover:bg-gray-100
-          active:scale-95
-          transition
-        "
-			>
+				flex items-center justify-center w-9 h-9 rounded-full
+				border border-gray-300
+				hover:bg-gray-100
+				active:scale-95
+				transition">
 				<IoMdArrowRoundBack />
 			</button>
 
 			{/* path */}
 			<div className="flex items-center gap-1 overflow-x-auto">
 				{props.currPath.map((dir, idx) => (
-					<span key={dir.id || idx} className="flex items-center gap-1">
+					<span key={idx} className="flex items-center gap-1">
 
 						<span
-							onClick={() => props.currPathSet(dir.id)}
+							onClick={() => { }}
 							className="
-                cursor-pointer
-                text-sm
-                hover:underline
-                whitespace-nowrap
-              "
-						>
-							{dir.name || "root"}
+						cursor-pointer
+						text-sm
+						hover:underline
+						whitespace-nowrap">
+							{dir.dirName || "root"}
 						</span>
 
 						{idx !== props.currPath.length - 1 && (

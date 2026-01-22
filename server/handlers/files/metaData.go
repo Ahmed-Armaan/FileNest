@@ -9,18 +9,17 @@ import (
 )
 
 func GetCurrDirElements(c *gin.Context) {
-	userIdAny, exist := c.Get("userId")
+	userId, exist := c.Get("userId")
 	if !exist {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
 			"error": "userId not present",
 		})
 		return
 	}
-
-	userIdStr, ok := userIdAny.(string)
+	ownerId, ok := userId.(uuid.UUID)
 	if !ok {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "invalid userId type",
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get userId",
 		})
 		return
 	}
@@ -32,19 +31,15 @@ func GetCurrDirElements(c *gin.Context) {
 		})
 		return
 	}
-
-	ids, err := stringsToUUID([]string{parentIdStr, userIdStr})
+	parentIdUUID, err := uuid.Parse(parentIdStr)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "invalid uuid format",
+			"error": "Could not read prentId",
 		})
 		return
 	}
 
-	parentId := &ids[0]
-	ownerId := ids[1]
-
-	children, err := database.GetAllChild(parentId, ownerId)
+	children, err := database.GetAllChild(&parentIdUUID, ownerId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to fetch directory contents",
@@ -55,21 +50,21 @@ func GetCurrDirElements(c *gin.Context) {
 	c.JSON(http.StatusOK, children)
 }
 
-func stringsToUUID(ids []string) ([]uuid.UUID, error) {
-	uuids := make([]uuid.UUID, 0, len(ids))
-
-	for _, id := range ids {
-		if id == "" {
-			uuids = append(uuids, uuid.Nil)
-			continue
-		}
-
-		parsed, err := uuid.Parse(id)
-		if err != nil {
-			return nil, err
-		}
-		uuids = append(uuids, parsed)
-	}
-
-	return uuids, nil
-}
+//func stringsToUUID(ids []string) ([]uuid.UUID, error) {
+//	uuids := make([]uuid.UUID, 0, len(ids))
+//
+//	for _, id := range ids {
+//		if id == "" {
+//			uuids = append(uuids, uuid.Nil)
+//			continue
+//		}
+//
+//		parsed, err := uuid.Parse(id)
+//		if err != nil {
+//			return nil, err
+//		}
+//		uuids = append(uuids, parsed)
+//	}
+//
+//	return uuids, nil
+//}

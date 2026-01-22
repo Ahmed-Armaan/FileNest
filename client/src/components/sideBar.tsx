@@ -2,9 +2,11 @@ import { useEffect, useState } from "react"
 import DragAndDrop from "./dragAndDrop";
 import UploadFile from "../utils/upload";
 import { useFileUploadContext, type FileUploadStatus } from "../context/FileUploadContext";
+import { useFileRefreshContext } from "../context/filesRefreshContext";
 
 function SideBar(props: { currDirId: string }) {
-	const { addFile, clearFiles, removeFile } = useFileUploadContext()
+	const { addFile, removeFile, setUploadData, setUploadedSize } = useFileUploadContext()
+	const { triggerFilesRefresh } = useFileRefreshContext()
 
 	const [showUploader, toggleUploader] = useState<boolean>(false)
 	const [files, setFiles] = useState<File[]>([]);
@@ -12,10 +14,15 @@ function SideBar(props: { currDirId: string }) {
 
 	useEffect(() => {
 		if (!startUpload) return
+		console.log(`Files`)
+		// console.log(props.currDirId) -- Empty string
 
 		files.forEach((file) => {
 			const fileData: FileUploadStatus = addFile(file)
-			UploadFile(fileData, removeFile, clearFiles, removeFile)
+
+			console.log(`Files: ${props.currDirId}`)
+
+			UploadFile(fileData, removeFile, setUploadData, setUploadedSize, props.currDirId, triggerFilesRefresh)
 		})
 	}, [startUpload])
 

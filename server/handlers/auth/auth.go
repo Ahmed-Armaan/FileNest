@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
@@ -55,8 +54,10 @@ func GetCredentials(c *gin.Context) {
 	}
 
 	// insert new users into the DB
-	if _, err = database.GetUserByGoogleID(userInfo.Sub); err != nil {
-		if err = database.InsertUser(userInfo.Name, userInfo.Sub, userInfo.Email, userInfo.Picture); err != nil {
+	user, err := database.GetUserByGoogleID(userInfo.Sub)
+	if err != nil {
+		user, err = database.InsertUser(userInfo.Name, userInfo.Sub, userInfo.Email, userInfo.Picture)
+		if err != nil {
 			c.Redirect(303, frontendUrl+"/?error=database_error")
 			return
 		}
@@ -67,14 +68,21 @@ func GetCredentials(c *gin.Context) {
 	//	return
 	//}
 
-	fmt.Println("Signing JWt")
 	jwtToken, err := utils.SignJwt(userInfo.Sub)
 	if err != nil {
 		c.Redirect(302, frontendUrl+"/?error=response_construction_error")
 		return
 	}
 
-	fmt.Println("setting cookies")
-	c.SetCookie("session", jwtToken, 60*60*24*7, "", "", false, true)
+	// get rootElementId
+	rootNode, err := database.GetRootNodeId(user.ID)
+	if err != nil {
+		c.Redirect(302, frontendUrl+"/?error=root_node_not_found")
+		return
+	}
+
+	c.SetCookie("rootNodeId", rootNode.ID.String(), 60*60*24*7, "/", "", false, false)
+	c.SetCookie("rootNodeUpdatedAt", rootNode.UpdatedAt.Format("2006-01-02 15:04:05"), 60*60*24*7, "/", "", false, false)
+	c.SetCookie("session", jwtToken, 60*60*24*7, "/", "", false, true)
 	c.Redirect(303, frontendUrl+"/home")
 }

@@ -13,12 +13,16 @@ const (
 	NodeTypeDirectory NodeType = "directory"
 )
 
+// User (id) -> Nodes(parent_id) -> ParentNode
+//                     └─Child Nodes are found using parent_id
+
 type Node struct {
 	ID        uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	Name      string     `gorm:"not null;uniqueIndex:unique_siblings"`
 	Type      string     `gorm:"not null"`
 	ParentID  *uuid.UUID `gorm:"type:uuid;index;uniqueIndex:unique_siblings"`
 	OwnerID   uuid.UUID  `gorm:"type:uuid;not null;index;uniqueIndex:unique_siblings"`
+	ObjectKey *string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

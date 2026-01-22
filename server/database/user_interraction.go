@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func InsertUser(userName string, googleID string, email string, profileImage string) error {
+func InsertUser(userName string, googleID string, email string, profileImage string) (*User, error) {
 	//	if _, err := GetUserByGoogleID(googleID); err == nil {
 	//		return nil
 	//	} else if err != gorm.ErrRecordNotFound {
@@ -38,10 +38,10 @@ func InsertUser(userName string, googleID string, email string, profileImage str
 		}
 		return nil
 	}); err != nil {
-		return err
+		return user, err
 	}
 
-	return nil
+	return user, nil
 }
 
 func GetUserByGoogleID(googleID string) (*User, error) {

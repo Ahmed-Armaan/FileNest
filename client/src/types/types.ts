@@ -1,4 +1,4 @@
-export type FileMetaData = {
+export type DirectoryMetaData = {
 	id: string
 	name: string
 	type: "file" | "directory"

@@ -35,8 +35,11 @@ func main() {
 func runServer() {
 	r := gin.Default()
 
+	cors.DefaultConfig()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{os.Getenv("FRONTEND_URI")},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
 	}))
 
@@ -49,6 +52,7 @@ func runServer() {
 	api.Use(middleware.VerifyJwt())
 	api.GET("/me", handlers.Me) // provide user their data
 	api.GET("/get_elements", files.GetCurrDirElements)
+	api.POST("/complete_upload", storage.CompleteUpload)
 
 	// using POST here to avoid caching.
 	// time limited urls are being generated here, they must not be cached

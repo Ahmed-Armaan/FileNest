@@ -16,7 +16,7 @@ type ChildData struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func InsertNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uuid.UUID) error {
+func InsertNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uuid.UUID, objectKey ...string) error {
 	//	var children []ChildData
 	//	query := DB.Model(&Node{}).
 	//		Where("name = ? AND owner_id = ?", name, ownerId)
@@ -39,6 +39,12 @@ func InsertNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uui
 		OwnerID:  ownerId,
 	}
 
+	if nodeType == NodeTypeDirectory {
+		node.ObjectKey = nil
+	} else {
+		node.ObjectKey = &objectKey[0]
+	}
+
 	if err := DB.Create(&node).Error; err != nil {
 		if helper.ResolvePostgresError(err) == helper.ErrUniqueViolation {
 			return errors.New("duplicate node")
@@ -52,15 +58,28 @@ func InsertNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uui
 // insert root node for new users, part of a transaction
 func insertRootNode(tx *gorm.DB, ownerId uuid.UUID) error {
 	if err := tx.Create(&Node{
-		Name:     "/",
-		Type:     string(NodeTypeDirectory),
-		ParentID: nil,
-		OwnerID:  ownerId,
+		Name:      "/",
+		Type:      string(NodeTypeDirectory),
+		ParentID:  nil,
+		OwnerID:   ownerId,
+		ObjectKey: nil,
 	}).Error; err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func GetRootNodeId(ownerId uuid.UUID) (*Node, error) {
+	nodeData := Node{}
+
+	if err := DB.Model(&Node{}).
+		Select("id, updated_at").
+		Where("owner_id = ? AND parent_id IS NULL", ownerId).
+		First(&nodeData).Error; err != nil {
+		return &nodeData, err
+	}
+	return &nodeData, nil
 }
 
 func GetAllChild(parentId *uuid.UUID, ownerId uuid.UUID) ([]ChildData, error) {

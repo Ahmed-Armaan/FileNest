@@ -21,9 +21,7 @@ func DbInit() error {
 		return err
 	}
 
-	if err := db.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS uniq_root_per_user
-		ON nodes (owner_id)
-		WHERE parent_id IS NULL;`).Error; err != nil {
+	if err := setConstraints(db); err != nil {
 		return err
 	}
 
