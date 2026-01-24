@@ -1,8 +1,3 @@
-// Vercel uses filesystem-based routing. Since this is a client-side routed SPA,
-// direct navigation or refresh on non-root routes (e.g. /home, /files/:id)
-// would return 404. This rewrite serves index.html for all paths so the
-// client router can handle routing.
-
 {
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
