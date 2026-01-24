@@ -62,7 +62,7 @@ func Run() error {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3000"
+		port = "9000"
 	}
 
 	err := r.Run(":" + port)
