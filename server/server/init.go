@@ -60,7 +60,12 @@ func Run() error {
 	// Returns a presigned URL for downloading a file part
 	//api.POST("/get_download_url/parts", storage.GetDownloadUrl)
 
-	err := r.Run()
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
+	err := r.Run(":" + port)
 	if err != nil {
 		return err
 	}

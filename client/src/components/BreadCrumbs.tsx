@@ -1,5 +1,4 @@
 import { IoMdArrowRoundBack } from "react-icons/io";
-import { FaFolderTree } from "react-icons/fa6";
 import { IoGrid } from "react-icons/io5";
 import { ViewSelector, type TakenPath } from "./FileGrid";
 
