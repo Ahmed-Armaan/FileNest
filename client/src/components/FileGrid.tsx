@@ -6,53 +6,23 @@ import { FileTreeNode } from "../utils/fileTree"
 import { useFileRefreshContext } from "../context/filesRefreshContext"
 import { FileUploadContextProvider } from "../context/FileUploadContext"
 import { getCookie } from "../utils/cookieExtractor"
+import GridView from "./gridView"
 
 export type TakenPath = {
 	dirName: string
 	TreeNode: FileTreeNode
 }
 
+export const ViewSelector = {
+	gridView: 0,
+	treeView: 1,
+}
+
 function FileGrid() {
-	//const [currElements, setCurrElements] = useState<DirectoryMetaData[]>([])
-
-	//const rootPath: DirectoryMetaData = {
-	//	id: "",
-	//	name: "",
-	//	type: "directory",
-	//	updatedAt: "",
-	//}
-	//const [currPath, setCurrPath] = useState<DirectoryMetaData[]>([rootPath])
-
-
-	//const currPathBack = () => {
-	//	setCurrPath(currPath => {
-	//		currPath.pop()
-	//		return currPath
-	//	})
-	//}
-
-	//  const currPathAdd = (nextDir: FileMetaData) => {
-	//    setCurrPath(currPath => {
-	//      currPath = [...currPath, nextDir]
-	//      return currPath
-	//    })
-	//  }
-
-	//const currPathSet = (newDirId: string) => {
-	//	var newPath: DirectoryMetaData[] = []
-
-	//	setCurrPath(currPath => {
-	//		for (const dir of currPath) {
-	//			newPath = [...newPath, dir]
-	//			if (dir.id === newDirId) break
-	//		}
-	//		return newPath
-	//	})
-	//}
-
-
 	const [FileTree, AlterFileTree] = useState<FileTreeNode>()
+	// const [TreeRoot, setTreeRoot] = useState<FileTreeNode>()
 	const [currPath, setCurrPath] = useState<TakenPath[]>([])
+	const [currView, setCurrView] = useState<number>(0)
 	const { fileRefreshTrigger } = useFileRefreshContext()
 
 	const currPathBack = () => {
@@ -76,24 +46,50 @@ function FileGrid() {
 		AlterFileTree(target.TreeNode)
 	}
 
+	const currPathAdd = (nextPath: TakenPath) => {
+		setCurrPath(prev => [...prev, nextPath])
+	}
+
+	const setChildren = (children: FileTreeNode[]) => {
+		AlterFileTree(prev => {
+			if (!prev) return prev
+			return new FileTreeNode(
+				prev.nodeId,
+				prev.nodeName,
+				prev.nodeType,
+				prev.updatedAt,
+				children,
+				prev.parent
+			)
+		})
+	}
+
 	// fetch root dir data
 	useEffect(() => {
 		const rootId = getCookie("rootNodeId")
 		const updated_at = getCookie("rootNodeUpdatedAt")
 
 		if (rootId && updated_at) {
-			const fileTree = new FileTreeNode(rootId, "/", "directory", updated_at, [], null)
+			const fileTree = new FileTreeNode(
+				rootId,
+				"/",
+				"directory",
+				updated_at,
+				[],
+				null
+			)
+
 			AlterFileTree(fileTree)
-			if (FileTree)
-				setCurrPath([{ dirName: "/", TreeNode: FileTree, }])
+			setCurrPath([{ dirName: "/", TreeNode: fileTree }])
 		}
 	}, [])
 
 	//fetch children on change
 	useEffect(() => {
+		console.log(currPath)
 		if (FileTree)
 			fetchChildElements(FileTree)
-	}, [FileTree, fileRefreshTrigger])
+	}, [currPath, fileRefreshTrigger])
 
 	//fetch children 
 	const fetchChildElements = async (node: FileTreeNode) => {
@@ -115,7 +111,7 @@ function FileGrid() {
 
 			const data: DirectoryMetaData[] = await res.json()
 			const children = data.map((ele) => new FileTreeNode(ele.id, ele.name, ele.type, ele.updatedAt, [], node))
-			node.children = children
+			setChildren(children)
 		}
 		catch (err) {
 			console.log(err)
@@ -126,24 +122,21 @@ function FileGrid() {
 		<FileUploadContextProvider>
 			<div className="max-h-screen flex flex-row border grow">
 
-				{/* files */}
 				<div className="flex-4">
 					<div>
-						<BreadCrumbs currPath={currPath} currPathBack={currPathBack} currPathSet={currPathSet} />
+						<BreadCrumbs currPath={currPath} currPathBack={currPathBack} currPathSet={currPathSet} setCurrView={setCurrView} />
 					</div>
 
 					<div>
-						<ul>
-							{
-								FileTree?.children.map((ele) => {
-									return <li key={ele.nodeId}>{`${ele.nodeType} - ${ele.nodeName}`}</li>
-								})
-							}
-						</ul>
+						{(FileTree && currView === ViewSelector.gridView) &&
+							<GridView fileTree={FileTree} AlterFileNode={AlterFileTree} currPathAdd={currPathAdd} />
+						}
+						{/*{(TreeRoot && currView === ViewSelector.treeView) &&
+							<TreeView treeRoot={TreeRoot} />
+						}*/}
 					</div>
 				</div>
 
-				{/* side bar */}
 				<div className="flex-1">
 					{
 						<SideBar currDirId={FileTree?.nodeId || ""} />

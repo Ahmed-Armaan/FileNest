@@ -2,7 +2,6 @@ package storage
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -14,7 +13,6 @@ import (
 )
 
 func GetNewUploadUrl(c *gin.Context) {
-	fmt.Printf("\nGetting URL\n")
 	uploadId, objectKey, err := helper.CreateNewUpload(ctx, s3Client, bucketName)
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
@@ -53,6 +51,14 @@ func CompleteUpload(c *gin.Context) {
 	fileName := c.Query("name")
 	objectKey := c.Query("objectKey")
 	uploadId := c.Query("uploadId")
+
+	size, err := strconv.ParseInt(c.Query("size"), 10, 64)
+	if err != nil {
+		c.AbortWithStatusJSON(500, gin.H{
+			"error": "Invalid size provided",
+		})
+		return
+	}
 
 	if uploadId == "" || objectKey == "" {
 		c.AbortWithStatusJSON(400, gin.H{
@@ -111,7 +117,7 @@ func CompleteUpload(c *gin.Context) {
 		return
 	}
 
-	if err := database.InsertNode(fileName, database.NodeTypeFile, &parentId, userIdUUID, objectKey); err != nil {
+	if err := database.InsertNode(fileName, database.NodeTypeFile, &parentId, userIdUUID, &size, objectKey); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "Database insert failed",
 		})

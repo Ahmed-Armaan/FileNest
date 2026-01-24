@@ -16,22 +16,7 @@ type ChildData struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func InsertNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uuid.UUID, objectKey ...string) error {
-	//	var children []ChildData
-	//	query := DB.Model(&Node{}).
-	//		Where("name = ? AND owner_id = ?", name, ownerId)
-	//	if parentId == nil {
-	//		query = query.Where("parent_id IS NULL")
-	//	} else {
-	//		query = query.Where("parent_id = ?", *parentId)
-	//	}
-	//	if err := query.Find(&children).Error; err != nil {
-	//		return err
-	//	}
-	//	if len(children) > 0 {
-	//		return fmt.Errorf("%s %s already exists", nodeType, name)
-	//	}
-
+func InsertNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uuid.UUID, size *int64, objectKey ...string) error {
 	node := Node{
 		Name:     name,
 		Type:     string(nodeType),
@@ -41,8 +26,10 @@ func InsertNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uui
 
 	if nodeType == NodeTypeDirectory {
 		node.ObjectKey = nil
+		node.SizeBytes = nil
 	} else {
 		node.ObjectKey = &objectKey[0]
+		node.SizeBytes = size
 	}
 
 	if err := DB.Create(&node).Error; err != nil {
@@ -63,6 +50,7 @@ func insertRootNode(tx *gorm.DB, ownerId uuid.UUID) error {
 		ParentID:  nil,
 		OwnerID:   ownerId,
 		ObjectKey: nil,
+		SizeBytes: nil,
 	}).Error; err != nil {
 		return err
 	}
@@ -100,4 +88,17 @@ func GetAllChild(parentId *uuid.UUID, ownerId uuid.UUID) ([]ChildData, error) {
 	}
 
 	return children, nil
+}
+
+func GetObjectKey_Size_Name(Id uuid.UUID) (*Node, error) {
+	node := Node{}
+
+	if err := DB.Model(&Node{}).
+		Select("object_key, size_bytes, name").
+		Where("id = ?", Id).
+		First(&node).Error; err != nil {
+		return &node, err
+	}
+
+	return &node, nil
 }

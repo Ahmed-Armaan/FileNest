@@ -1,4 +1,6 @@
 export type NodeType = "file" | "directory"
+export const NodeTypeFile = "file"
+export const NodeTypeDirectory = "directory"
 
 export class FileTreeNode {
 	readonly nodeId: string

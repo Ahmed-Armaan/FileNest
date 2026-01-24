@@ -17,7 +17,7 @@ func DbInit() error {
 		return err
 	}
 
-	if err := db.AutoMigrate(&User{}, &Node{}, &FileChunk{}); err != nil {
+	if err := db.AutoMigrate(&User{}, &Node{}); err != nil {
 		return err
 	}
 

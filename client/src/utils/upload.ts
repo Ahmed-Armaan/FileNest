@@ -121,6 +121,7 @@ async function completeUpload(file: FileUploadStatus, currDirId: string, objectK
 	reqUrl.searchParams.set("parentId", currDirId)
 	reqUrl.searchParams.set("objectKey", objectKey)
 	reqUrl.searchParams.set("uploadId", uploadId)
+	reqUrl.searchParams.set("size", file.file.size.toString())
 
 	const res = await fetch(reqUrl.toString(), {
 		method: "POST",
