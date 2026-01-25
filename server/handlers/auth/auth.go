@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"net/http"
 	"os"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
@@ -81,8 +82,35 @@ func GetCredentials(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("rootNodeId", rootNode.ID.String(), 60*60*24*7, "/", "", false, false)
-	c.SetCookie("rootNodeUpdatedAt", rootNode.UpdatedAt.Format("2006-01-02 15:04:05"), 60*60*24*7, "/", "", false, false)
-	c.SetCookie("session", jwtToken, 60*60*24*7, "/", "", false, true)
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "rootNodeId",
+		Value:    rootNode.ID.String(),
+		Path:     "/",
+		MaxAge:   60 * 60 * 24 * 7,
+		Secure:   true,
+		HttpOnly: false,
+		SameSite: http.SameSiteNoneMode,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "rootNodeUpdatedAt",
+		Value:    rootNode.UpdatedAt.Format("2006-01-02 15:04:05"),
+		Path:     "/",
+		MaxAge:   60 * 60 * 24 * 7,
+		Secure:   true,
+		HttpOnly: false,
+		SameSite: http.SameSiteNoneMode,
+	})
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "session",
+		Value:    jwtToken,
+		Path:     "/",
+		MaxAge:   60 * 60 * 24 * 7,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	})
+
 	c.Redirect(303, frontendUrl+"/home")
 }
