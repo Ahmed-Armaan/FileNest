@@ -5,7 +5,6 @@ import BreadCrumbs from "./BreadCrumbs"
 import { FileTreeNode } from "../utils/fileTree"
 import { useFileRefreshContext } from "../context/filesRefreshContext"
 import { FileUploadContextProvider } from "../context/FileUploadContext"
-import { getCookie } from "../utils/cookieExtractor"
 import GridView from "./gridView"
 
 export type TakenPath = {
@@ -18,11 +17,17 @@ export const ViewSelector = {
 	treeView: 1,
 }
 
+type rootNodeRes = {
+	rootNodeId: string
+	rootNodeUpdatedAt: string
+}
+
 function FileGrid() {
 	const [FileTree, AlterFileTree] = useState<FileTreeNode>()
 	// const [TreeRoot, setTreeRoot] = useState<FileTreeNode>()
 	const [currPath, setCurrPath] = useState<TakenPath[]>([])
 	const [currView, setCurrView] = useState<number>(0)
+	const [rootNode, setRootNode] = useState<rootNodeRes | undefined>(undefined)
 	const { fileRefreshTrigger } = useFileRefreshContext()
 
 	const currPathBack = () => {
@@ -66,8 +71,12 @@ function FileGrid() {
 
 	// fetch root dir data
 	useEffect(() => {
-		const rootId = getCookie("rootNodeId")
-		const updated_at = getCookie("rootNodeUpdatedAt")
+		getRootNode()
+	}, [])
+
+	useEffect(() => {
+		const rootId = rootNode?.rootNodeId
+		const updated_at = rootNode?.rootNodeUpdatedAt
 
 		if (rootId && updated_at) {
 			const fileTree = new FileTreeNode(
@@ -82,7 +91,7 @@ function FileGrid() {
 			AlterFileTree(fileTree)
 			setCurrPath([{ dirName: "/", TreeNode: fileTree }])
 		}
-	}, [])
+	}, [rootNode])
 
 	//fetch children on change
 	useEffect(() => {
@@ -90,6 +99,26 @@ function FileGrid() {
 		if (FileTree)
 			fetchChildElements(FileTree)
 	}, [currPath, fileRefreshTrigger])
+
+	const getRootNode = async () => {
+		if (rootNode) return
+		try {
+			const reqUrl = new URL(`${import.meta.env.VITE_BACKEND_URL}/api/root_node`)
+			const res = await fetch(reqUrl.toString(), {
+				credentials: "include",
+			})
+
+			if (!res.ok) {
+				throw new Error("fetch request failed")
+			}
+
+			const data: rootNodeRes = await res.json()
+			setRootNode(data)
+		}
+		catch (err) {
+			console.log(err)
+		}
+	}
 
 	//fetch children 
 	const fetchChildElements = async (node: FileTreeNode) => {
