@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 
@@ -33,27 +32,23 @@ func GetCredentials(c *gin.Context) {
 	oauthErr := c.Query("error")
 
 	if oauthErr != "" {
-		fmt.Printf("OAUTH_ERR: %s\n", oauthErr)
 		c.Redirect(302, frontendUrl+"/?error="+oauthErr)
 		return
 	}
 
 	if code == "" {
-		fmt.Println("No code found")
 		c.Redirect(302, frontendUrl+"/?error=Oauth_denied")
 		return
 	}
 
 	tokenResponse, err := getTokens(code)
 	if err != nil {
-		fmt.Println("No token found")
 		c.Redirect(302, frontendUrl+"/?error=Oauth_denied")
 		return
 	}
 
 	userInfo, err := getUserInfo(tokenResponse.AccessToken)
 	if err != nil {
-		fmt.Println("No userInfo found")
 		c.Redirect(302, frontendUrl+"/?error=Oauth_denied")
 		return
 	}

@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
+
+	"github.com/joho/godotenv"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
 	"github.com/Ahmed-Armaan/FileNest/server"
 	"github.com/Ahmed-Armaan/FileNest/storage"
+	"github.com/Ahmed-Armaan/FileNest/utils"
 )
 
 func main() {
@@ -21,6 +23,10 @@ func main() {
 	}
 
 	if err := storage.S3Init(); err != nil {
+		log.Fatalln(err)
+	}
+
+	if err := utils.JWTinit(); err != nil {
 		log.Fatalln(err)
 	}
 

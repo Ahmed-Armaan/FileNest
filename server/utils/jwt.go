@@ -3,7 +3,6 @@ package utils
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -12,12 +11,14 @@ import (
 
 var jwtSecret []byte
 
-func JWTinit() {
+func JWTinit() error {
 	secret := os.Getenv("JWT_SECRET_KEY")
 	if len(secret) == 0 {
-		log.Fatalln("Error: JWT secret unavailable")
+		return errors.New("JWT secret unavailable")
 	}
+
 	jwtSecret = []byte(secret)
+	return nil
 }
 
 // jwt subject uses google sub for authentication
