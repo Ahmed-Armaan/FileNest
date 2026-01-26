@@ -8,6 +8,7 @@ import (
 
 	"github.com/Ahmed-Armaan/FileNest/database"
 	"github.com/Ahmed-Armaan/FileNest/storage/helper"
+	"github.com/Ahmed-Armaan/FileNest/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -75,18 +76,10 @@ func CompleteUpload(c *gin.Context) {
 		return
 	}
 
-	userId, exist := c.Get("userId")
-	if !exist {
+	user, err := utils.GetUserFromGoogleId(c)
+	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": "Cant get userId",
-		})
-		return
-	}
-
-	userIdUUID, ok := userId.(uuid.UUID)
-	if !ok {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "Cant read userId",
+			"error": err,
 		})
 		return
 	}
@@ -117,7 +110,7 @@ func CompleteUpload(c *gin.Context) {
 		return
 	}
 
-	if err := database.InsertNode(fileName, database.NodeTypeFile, &parentId, userIdUUID, &size, objectKey); err != nil {
+	if err := database.InsertNode(fileName, database.NodeTypeFile, &parentId, user.ID, &size, objectKey); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "Database insert failed",
 		})

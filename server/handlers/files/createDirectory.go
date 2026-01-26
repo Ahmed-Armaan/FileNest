@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
+	"github.com/Ahmed-Armaan/FileNest/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -19,22 +20,15 @@ func CreateDirectory(c *gin.Context) {
 		return
 	}
 
-	userId, exist := c.Get("userId")
-	if !exist {
+	user, err := utils.GetUserFromGoogleId(c)
+	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": "failed to get userId",
-		})
-		return
-	}
-	userIdUUID, ok := userId.(uuid.UUID)
-	if !ok {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": "failed to get userId",
+			"error": err,
 		})
 		return
 	}
 
-	if err := database.InsertNode(dirName, database.NodeTypeDirectory, &parentIdUUID, userIdUUID, nil); err != nil {
+	if err := database.InsertNode(dirName, database.NodeTypeDirectory, &parentIdUUID, user.ID, nil); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "Database error",
 		})

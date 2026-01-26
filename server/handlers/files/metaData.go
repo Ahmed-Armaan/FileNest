@@ -4,27 +4,21 @@ import (
 	"net/http"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
+	"github.com/Ahmed-Armaan/FileNest/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 func GetRootDirId(c *gin.Context) {
-	userIdStr, exist := c.Get("userId")
-	if !exist {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "userId not present",
-		})
-		return
-	}
-	userId, ok := userIdStr.(uuid.UUID)
-	if !ok {
+	user, err := utils.GetUserFromGoogleId(c)
+	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to get userId",
+			"error": err,
 		})
 		return
 	}
 
-	rootNode, err := database.GetRootNodeId(userId)
+	rootNode, err := database.GetRootNodeId(user.ID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "database Error",
@@ -39,17 +33,10 @@ func GetRootDirId(c *gin.Context) {
 }
 
 func GetCurrDirElements(c *gin.Context) {
-	userId, exist := c.Get("userId")
-	if !exist {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "userId not present",
-		})
-		return
-	}
-	ownerId, ok := userId.(uuid.UUID)
-	if !ok {
+	user, err := utils.GetUserFromGoogleId(c)
+	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to get userId",
+			"error": err,
 		})
 		return
 	}
@@ -69,7 +56,7 @@ func GetCurrDirElements(c *gin.Context) {
 		return
 	}
 
-	children, err := database.GetAllChild(&parentIdUUID, ownerId)
+	children, err := database.GetAllChild(&parentIdUUID, user.ID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to fetch directory contents",
@@ -79,22 +66,3 @@ func GetCurrDirElements(c *gin.Context) {
 
 	c.JSON(http.StatusOK, children)
 }
-
-//func stringsToUUID(ids []string) ([]uuid.UUID, error) {
-//	uuids := make([]uuid.UUID, 0, len(ids))
-//
-//	for _, id := range ids {
-//		if id == "" {
-//			uuids = append(uuids, uuid.Nil)
-//			continue
-//		}
-//
-//		parsed, err := uuid.Parse(id)
-//		if err != nil {
-//			return nil, err
-//		}
-//		uuids = append(uuids, parsed)
-//	}
-//
-//	return uuids, nil
-//}
