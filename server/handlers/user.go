@@ -1,20 +1,24 @@
 package handlers
 
 import (
+	"net/http"
+
+	"github.com/Ahmed-Armaan/FileNest/utils"
 	"github.com/gin-gonic/gin"
 )
 
 func Me(c *gin.Context) {
-	// JWT authentication middleware sets these data
-	// since the middleware hit the DB for user account authentication and get user details as a result.
-	// I decided to use the fetched data rather than making new request.
-	userName, _ := c.Get("username")
-	profile, _ := c.Get("profile")
-	email, _ := c.Get("email")
+	user, err := utils.GetUserFromGoogleId(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
 
 	c.JSON(200, gin.H{
-		"user":    userName,
-		"profile": profile,
-		"email":   email,
+		"user":    user.UserName,
+		"profile": user.ProfileImage,
+		"email":   user.Email,
 	})
 }
