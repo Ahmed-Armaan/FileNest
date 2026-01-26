@@ -8,6 +8,36 @@ import (
 	"github.com/google/uuid"
 )
 
+func GetRootDirId(c *gin.Context) {
+	userIdStr, exist := c.Get("userId")
+	if !exist {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "userId not present",
+		})
+		return
+	}
+	userId, ok := userIdStr.(uuid.UUID)
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get userId",
+		})
+		return
+	}
+
+	rootNode, err := database.GetRootNodeId(userId)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": "database Error",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"rootNodeId":        rootNode.ID,
+		"rootNodeUpdatedAt": rootNode.UpdatedAt,
+	})
+}
+
 func GetCurrDirElements(c *gin.Context) {
 	userId, exist := c.Get("userId")
 	if !exist {

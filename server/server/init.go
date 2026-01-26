@@ -33,6 +33,9 @@ func Run() error {
 	api.Use(middleware.VerifyJwt())
 	api.GET("/me", handlers.Me) // provide user their data
 
+	// returns root node id and updated at
+	api.GET("/root_node", files.GetRootDirId)
+
 	// GET /get_elements?parentId=...
 	// Returns children of a directory
 	api.GET("/get_elements", files.GetCurrDirElements)
