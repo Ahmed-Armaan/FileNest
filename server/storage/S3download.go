@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
