@@ -10,7 +10,7 @@ import (
 )
 
 func GetRootDirId(c *gin.Context) {
-	user, err := utils.GetUserFromGoogleId(c)
+	googleId, err := utils.GoogleIdstring(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err,
@@ -18,7 +18,7 @@ func GetRootDirId(c *gin.Context) {
 		return
 	}
 
-	rootNode, err := database.GetRootNodeId(user.ID)
+	rootNode, err := database.GetRootNodeId(googleId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "database Error",
@@ -33,7 +33,7 @@ func GetRootDirId(c *gin.Context) {
 }
 
 func GetCurrDirElements(c *gin.Context) {
-	user, err := utils.GetUserFromGoogleId(c)
+	googleId, err := utils.GoogleIdstring(c)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err,
@@ -56,7 +56,7 @@ func GetCurrDirElements(c *gin.Context) {
 		return
 	}
 
-	children, err := database.GetAllChild(&parentIdUUID, user.ID)
+	children, err := database.GetAllChild(&parentIdUUID, googleId)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to fetch directory contents",

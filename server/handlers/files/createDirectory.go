@@ -20,7 +20,23 @@ func CreateDirectory(c *gin.Context) {
 		return
 	}
 
-	user, err := utils.GetUserFromGoogleId(c)
+	//user, err := utils.GetUserFromGoogleId(c)
+	//if err != nil {
+	//	c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+	//		"error": err,
+	//	})
+	//	return
+	//}
+
+	googleId, err := utils.GoogleIdstring(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	user, err := database.GetUserDataByGoogleId(googleId, database.UserDbColums.ID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err,
