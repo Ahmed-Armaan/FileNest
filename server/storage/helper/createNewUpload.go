@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateNewUpload(ctx context.Context, s3Client *s3.Client, bucketName string) (uploadId string, objectKey string, err error) {
-	objectKey = "data/" + uuid.NewString()
+func CreateNewUpload(ctx context.Context, s3Client *s3.Client, bucketName string, prefixKey string) (uploadId string, objectKey string, err error) {
+	objectKey = prefixKey + uuid.NewString()
 
 	out, err := s3Client.CreateMultipartUpload(ctx, &s3.CreateMultipartUploadInput{
 		Bucket: aws.String(bucketName),

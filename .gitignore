@@ -2,3 +2,4 @@ todo.txt
 tmux_init.sh
 client_secret_291024789038-7fl8d52jdd79hmv8hdf32r6ieg8te6io.apps.googleusercontent.com.json
 .env
+*_test.go
