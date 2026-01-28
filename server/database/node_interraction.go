@@ -58,24 +58,36 @@ func insertRootNode(tx *gorm.DB, ownerId uuid.UUID) error {
 	return nil
 }
 
-func GetRootNodeId(ownerId uuid.UUID) (*Node, error) {
-	nodeData := Node{}
+func GetRootNodeId(googleId string) (*Node, error) {
+	var nodeData Node
 
-	if err := DB.Model(&Node{}).
+	subQuery := GetUserIdByGoogleIdSubQuery(googleId)
+
+	err := DB.Model(&Node{}).
 		Select("id, updated_at").
-		Where("owner_id = ? AND parent_id IS NULL", ownerId).
-		First(&nodeData).Error; err != nil {
-		return &nodeData, err
+		Where(
+			"owner_id = (?)",
+			gorm.Expr("(?)", subQuery),
+		).
+		Where("parent_id IS NULL").
+		Take(&nodeData).
+		Error
+
+	if err != nil {
+		return nil, err
 	}
+
 	return &nodeData, nil
 }
 
-func GetAllChild(parentId *uuid.UUID, ownerId uuid.UUID) ([]ChildData, error) {
+func GetAllChild(parentId *uuid.UUID, googleId string) ([]ChildData, error) {
 	var children []ChildData
 
 	query := DB.Model(&Node{}).
 		Select("id, name, type, updated_at").
-		Where("owner_id = ?", ownerId)
+		Where(
+			"owner_id = (?)",
+			GetUserIdByGoogleIdSubQuery(googleId, UserDbColums.ID))
 
 	if parentId == nil {
 		query = query.Where("parent_id IS NULL")
@@ -96,7 +108,7 @@ func GetObjectKey_Size_Name(Id uuid.UUID) (*Node, error) {
 	if err := DB.Model(&Node{}).
 		Select("object_key, size_bytes, name").
 		Where("id = ?", Id).
-		First(&node).Error; err != nil {
+		Take(&node).Error; err != nil {
 		return &node, err
 	}
 

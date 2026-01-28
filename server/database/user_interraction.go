@@ -47,7 +47,7 @@ func InsertUser(userName string, googleID string, email string, profileImage str
 func GetUserByGoogleID(googleID string) (*User, error) {
 	var user User
 
-	err := DB.Where("google_id = ?", googleID).First(&user).Error
+	err := DB.Where("google_id = ?", googleID).Take(&user).Error
 	if err != nil {
 		return nil, err
 	}

@@ -14,7 +14,7 @@ import (
 )
 
 func GetNewUploadUrl(c *gin.Context) {
-	uploadId, objectKey, err := helper.CreateNewUpload(ctx, s3Client, bucketName)
+	uploadId, objectKey, err := helper.CreateNewUpload(ctx, s3Client, bucketName, "data/")
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
@@ -76,7 +76,17 @@ func CompleteUpload(c *gin.Context) {
 		return
 	}
 
-	user, err := utils.GetUserFromGoogleId(c)
+	// googleId type assertion
+	googleId, err := utils.GoogleIdstring(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	// get userId
+	user, err := database.GetUserDataByGoogleId(googleId, database.UserDbColums.ID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err,
