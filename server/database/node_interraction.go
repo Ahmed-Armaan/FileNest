@@ -2,7 +2,6 @@ package database
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/Ahmed-Armaan/FileNest/database/helper"
@@ -106,7 +105,6 @@ func GetAllChild(parentId *uuid.UUID, googleId string) ([]ChildData, error) {
 		return nil, err
 	}
 
-	fmt.Printf("\n\n\n%+v\n\n\n", children)
 	return children, nil
 }
 
