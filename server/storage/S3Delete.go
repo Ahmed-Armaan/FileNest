@@ -1,16 +1,12 @@
 package storage
 
 import (
-	"fmt"
-
 	"github.com/Ahmed-Armaan/FileNest/database"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 )
 
 func DeleteFileFromS3(id uuid.UUID) error {
-	fmt.Printf("\n\n\nDeleting %s from S3\n\n\n", id)
-
 	fileData, err := database.GetObjectKey_Size_Name(id)
 	if err != nil {
 		return err
