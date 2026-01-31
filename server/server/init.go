@@ -44,6 +44,10 @@ func Run() error {
 	// Creates a new directory under parent
 	api.PUT("/create_directory", files.CreateDirectory)
 
+	// DELETE /deelete?nodeId=...
+	// deleted a node in file tree
+	api.DELETE("/delete", files.DeleteNode)
+
 	// POST /complete_upload?name=...&objectKey=...&uploadId=...
 	// Body: []CompletedPartsData
 	api.POST("/complete_upload", storage.CompleteUpload)

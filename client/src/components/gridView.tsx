@@ -9,6 +9,7 @@ import {
 } from "react-icons/fi";
 import type { TakenPath } from "./FileGrid";
 import { DownloadFile } from "../utils/download";
+import { useFileRefreshContext } from "../context/filesRefreshContext";
 
 interface GridViewProps {
 	fileTree: FileTreeNode;
@@ -19,11 +20,10 @@ interface GridViewProps {
 function GridView(props: GridViewProps) {
 	const [menuNode, setMenuNode] = useState<FileTreeNode | null>(null);
 	const [menuPos, setMenuPos] = useState<{ x: number; y: number } | null>(null);
-
 	const [showShare, setShowShare] = useState(false);
-	const [sharePassword, setSharePassword] = useState("");
-
+	const [sharePassword, setSharePassword] = useState("")
 	const justOpenedRef = useRef(false);
+	const { triggerFilesRefresh } = useFileRefreshContext()
 
 	const handleDirectoryClick = (node: FileTreeNode) => {
 		props.AlterFileNode(node);
@@ -67,9 +67,31 @@ function GridView(props: GridViewProps) {
 		console.log("share", {
 			nodeId: menuNode?.nodeId,
 			password: sharePassword || null,
-		});
-		closeMenu();
+		})
+		closeMenu()
 	};
+
+	const deleteNode = async (nodeId: string) => {
+		try {
+			const reqUrl = new URL(`${import.meta.env.VITE_BACKEND_URL}/api/delete`)
+			reqUrl.searchParams.set("nodeId", nodeId)
+
+			const res = await fetch(reqUrl.toString(), {
+				method: "DELETE",
+				credentials: "include",
+			})
+
+			if (!res.ok) {
+				throw new Error("Failed to delete")
+			}
+
+			closeMenu()
+			triggerFilesRefresh()
+		}
+		catch (err) {
+			console.log(err)
+		}
+	}
 
 	return (
 		<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 p-4">
@@ -120,7 +142,8 @@ function GridView(props: GridViewProps) {
 								<FiShare2 /> Share
 							</button>
 
-							<button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10">
+							<button className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-red-500/10"
+								onClick={() => deleteNode(menuNode.nodeId)}>
 								<FiTrash2 /> Delete
 							</button>
 						</>

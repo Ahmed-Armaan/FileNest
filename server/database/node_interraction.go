@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Ahmed-Armaan/FileNest/database/helper"
@@ -16,12 +17,18 @@ type ChildData struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+type DeletedNodeData struct {
+	ID   uuid.UUID `json:"id"`
+	Type string    `json:"type"`
+}
+
 func InsertNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uuid.UUID, size *int64, objectKey ...string) error {
 	node := Node{
-		Name:     name,
-		Type:     string(nodeType),
-		ParentID: parentId,
-		OwnerID:  ownerId,
+		Name:      name,
+		Type:      string(nodeType),
+		ParentID:  parentId,
+		OwnerID:   ownerId,
+		DeletedAt: nil,
 	}
 
 	if nodeType == NodeTypeDirectory {
@@ -86,7 +93,7 @@ func GetAllChild(parentId *uuid.UUID, googleId string) ([]ChildData, error) {
 	query := DB.Model(&Node{}).
 		Select("id, name, type, updated_at").
 		Where(
-			"owner_id = (?)",
+			"owner_id = (?) AND deleted_at IS NULL",
 			GetUserIdByGoogleIdSubQuery(googleId, UserDbColums.ID))
 
 	if parentId == nil {
@@ -99,6 +106,19 @@ func GetAllChild(parentId *uuid.UUID, googleId string) ([]ChildData, error) {
 		return nil, err
 	}
 
+	fmt.Printf("\n\n\n%+v\n\n\n", children)
+	return children, nil
+}
+
+func GetAllChildToDelete(parentId *uuid.UUID) ([]ChildData, error) {
+	var children []ChildData
+
+	if err := DB.Model(&Node{}).
+		Select("id", "type").
+		Where("parent_id = ?", parentId).
+		Find(&children).Error; err != nil {
+		return children, err
+	}
 	return children, nil
 }
 
@@ -113,4 +133,36 @@ func GetObjectKey_Size_Name(Id uuid.UUID) (*Node, error) {
 	}
 
 	return &node, nil
+}
+
+func DeleteNode(googleId string, nodeId uuid.UUID) error {
+	subquery := GetUserIdByGoogleIdSubQuery(googleId, UserDbColums.ID)
+	if err := DB.Model(&Node{}).Where("id = ? AND owner_id = (?)",
+		nodeId,
+		subquery).
+		Update("deleted_at", time.Now()).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetDeletedNodes(count int) ([]DeletedNodeData, error) {
+	deletedNodes := []DeletedNodeData{}
+
+	if err := DB.Model(&Node{}).
+		Select("id, type").
+		Where("deleted_at IS NOT NULL").
+		Limit(count).Find(&deletedNodes).
+		Error; err != nil {
+		return deletedNodes, err
+	}
+	return deletedNodes, nil
+}
+
+func HardDeletion(id uuid.UUID) error {
+	if err := DB.Delete(&Node{}, id).Error; err != nil {
+		return err
+	}
+	return nil
 }

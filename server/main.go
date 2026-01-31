@@ -7,6 +7,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
+	"github.com/Ahmed-Armaan/FileNest/database/cleanupjobs"
 	"github.com/Ahmed-Armaan/FileNest/server"
 	"github.com/Ahmed-Armaan/FileNest/storage"
 	"github.com/Ahmed-Armaan/FileNest/utils"
@@ -29,6 +30,8 @@ func main() {
 	if err := utils.JWTinit(); err != nil {
 		log.Fatalln(err)
 	}
+
+	cleanupjobs.CronInit()
 
 	if err := server.Run(); err != nil {
 		log.Fatalln(err)

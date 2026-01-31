@@ -10,7 +10,7 @@ import (
 func BenchmarkUserBrowseFlow(b *testing.B) {
 	googleId := os.Getenv("TEST_GOOGLE_ID")
 	if googleId == "" {
-		b.Skip("BENCH_GOOGLE_ID not set")
+		b.Skip("TEST_GOOGLE_ID not set")
 	}
 
 	if err := DbInit(); err != nil {
