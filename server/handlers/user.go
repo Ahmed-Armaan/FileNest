@@ -8,26 +8,28 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Me(c *gin.Context) {
-	googleIdStr, err := utils.GoogleIdstring(c)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": err,
-		})
-		return
-	}
+func Me(db database.DatabaseStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		googleIdStr, err := utils.GoogleIdstring(c)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": err,
+			})
+			return
+		}
 
-	user, err := database.GetUserDataByGoogleId(googleIdStr, database.UserDbColums.UserName, database.UserDbColums.Email, database.UserDbColums.ProfileImage)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": err,
-		})
-		return
-	}
+		user, err := db.GetUserDataByGoogleId(googleIdStr, database.UserDbColums.UserName, database.UserDbColums.Email, database.UserDbColums.ProfileImage)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": err,
+			})
+			return
+		}
 
-	c.JSON(200, gin.H{
-		"user":    user.UserName,
-		"profile": user.ProfileImage,
-		"email":   user.Email,
-	})
+		c.JSON(200, gin.H{
+			"user":    user.UserName,
+			"profile": user.ProfileImage,
+			"email":   user.Email,
+		})
+	}
 }
