@@ -18,13 +18,15 @@ var UserDbColums = struct {
 	ProfileImage: "profile_image",
 }
 
-func GetUserIdByGoogleIdSubQuery(googleId string, columns ...string) *gorm.DB {
-	return DB.Model(&User{}).Select("id").Where("google_id = ?", googleId)
+func (db *DatabaseHolder) UserIDByGoogleIDQuery(googleId string, columns ...string) *gorm.DB {
+	return db.DB.Model(&User{}).
+		Select("id").
+		Where("google_id = ?", googleId)
 }
 
-func GetUserDataByGoogleId(googleId string, columns ...string) (*User, error) {
+func (db *DatabaseHolder) GetUserDataByGoogleId(googleId string, columns ...string) (*User, error) {
 	user := User{}
-	if err := DB.Model(&User{}).
+	if err := db.DB.Model(&User{}).
 		Select(columns).
 		Where("google_id = ?", googleId).
 		Take(&user).Error; err != nil {

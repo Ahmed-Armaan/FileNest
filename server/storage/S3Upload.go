@@ -1,20 +1,15 @@
 package storage
 
 import (
-	"encoding/json"
-	"io"
-	"net/http"
+	"errors"
 	"strconv"
 
-	"github.com/Ahmed-Armaan/FileNest/database"
 	"github.com/Ahmed-Armaan/FileNest/storage/helper"
-	"github.com/Ahmed-Armaan/FileNest/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
-func GetNewUploadUrl(c *gin.Context) {
-	uploadId, objectKey, err := helper.CreateNewUpload(ctx, s3Client, bucketName, "data/")
+func (s *StorageHolder) GetNewUploadUrl(c *gin.Context) {
+	uploadId, objectKey, err := helper.CreateNewUpload(s.ctx, s.s3Client, s.bucketName, "data/")
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
@@ -26,7 +21,7 @@ func GetNewUploadUrl(c *gin.Context) {
 	})
 }
 
-func GetUploadUrl(c *gin.Context) {
+func (s *StorageHolder) GetUploadUrl(c *gin.Context) {
 	uploadId := c.Query("uploadId")
 	objectKey := c.Query("objectKey")
 	partStr := c.Query("partNumber")
@@ -37,7 +32,7 @@ func GetUploadUrl(c *gin.Context) {
 		return
 	}
 
-	url, err := helper.PresignPart(ctx, s3Client, bucketName, objectKey, uploadId, int32(partNumber))
+	url, err := helper.PresignPart(s.ctx, s.s3Client, s.bucketName, objectKey, uploadId, int32(partNumber))
 	if err != nil {
 		c.AbortWithStatusJSON(500, gin.H{"error": err.Error()})
 		return
@@ -48,86 +43,94 @@ func GetUploadUrl(c *gin.Context) {
 	})
 }
 
-func CompleteUpload(c *gin.Context) {
-	fileName := c.Query("name")
-	objectKey := c.Query("objectKey")
-	uploadId := c.Query("uploadId")
-
-	size, err := strconv.ParseInt(c.Query("size"), 10, 64)
+func (s *StorageHolder) CompleteUploadS3(objectKey string, uploadId string, completdPartsData []helper.CompetedPartsData) error {
+	err := helper.CompleteMultipartUpload(s.ctx, s.s3Client, s.bucketName, objectKey, uploadId, completdPartsData)
 	if err != nil {
-		c.AbortWithStatusJSON(500, gin.H{
-			"error": "Invalid size provided",
-		})
-		return
+		return errors.New("Failed to complete upload")
 	}
-
-	if uploadId == "" || objectKey == "" {
-		c.AbortWithStatusJSON(400, gin.H{
-			"error": "uploadId or objectKey missing",
-		})
-		return
-	}
-
-	parentId, err := uuid.Parse(c.Query("parentId"))
-	if err != nil {
-		c.AbortWithStatusJSON(500, gin.H{
-			"error": "Invalid parentId provided",
-		})
-		return
-	}
-
-	// googleId type assertion
-	googleId, err := utils.GoogleIdstring(c)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": err,
-		})
-		return
-	}
-
-	// get userId
-	user, err := database.GetUserDataByGoogleId(googleId, database.UserDbColums.ID)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": err,
-		})
-		return
-	}
-
-	req := c.Request.Body
-	defer c.Request.Body.Close()
-	reqData, err := io.ReadAll(req)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to read request body",
-		})
-		return
-	}
-
-	completdPartsData := make([]helper.CompetedPartsData, 0)
-	if err := json.Unmarshal(reqData, &completdPartsData); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request body",
-		})
-		return
-	}
-
-	err = helper.CompleteMultipartUpload(ctx, s3Client, bucketName, objectKey, uploadId, completdPartsData)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to complete upload",
-		})
-		return
-	}
-
-	if err := database.InsertNode(fileName, database.NodeTypeFile, &parentId, user.ID, &size, objectKey); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": "Database insert failed",
-		})
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"msg": "File upload successfull",
-	})
+	return nil
 }
+
+//func (s *StorageHolder) CompleteUpload(c *gin.Context) {
+//	fileName := c.Query("name")
+//	objectKey := c.Query("objectKey")
+//	uploadId := c.Query("uploadId")
+//
+//	size, err := strconv.ParseInt(c.Query("size"), 10, 64)
+//	if err != nil {
+//		c.AbortWithStatusJSON(500, gin.H{
+//			"error": "Invalid size provided",
+//		})
+//		return
+//	}
+//
+//	if uploadId == "" || objectKey == "" {
+//		c.AbortWithStatusJSON(400, gin.H{
+//			"error": "uploadId or objectKey missing",
+//		})
+//		return
+//	}
+//
+//	parentId, err := uuid.Parse(c.Query("parentId"))
+//	if err != nil {
+//		c.AbortWithStatusJSON(500, gin.H{
+//			"error": "Invalid parentId provided",
+//		})
+//		return
+//	}
+//
+//	// googleId type assertion
+//	googleId, err := utils.GoogleIdstring(c)
+//	if err != nil {
+//		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+//			"error": err,
+//		})
+//		return
+//	}
+//
+//	// get userId
+//	user, err := db.GetUserDataByGoogleId(googleId, database.UserDbColums.ID)
+//	if err != nil {
+//		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+//			"error": err,
+//		})
+//		return
+//	}
+//
+//	req := c.Request.Body
+//	defer c.Request.Body.Close()
+//	reqData, err := io.ReadAll(req)
+//	if err != nil {
+//		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+//			"error": "Failed to read request body",
+//		})
+//		return
+//	}
+//
+//	completdPartsData := make([]helper.CompetedPartsData, 0)
+//	if err := json.Unmarshal(reqData, &completdPartsData); err != nil {
+//		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+//			"error": "Invalid request body",
+//		})
+//		return
+//	}
+//
+//	err = helper.CompleteMultipartUpload(s.ctx, s.s3Client, s.bucketName, objectKey, uploadId, completdPartsData)
+//	if err != nil {
+//		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+//			"error": "Failed to complete upload",
+//		})
+//		return
+//	}
+//
+//	if err := db.CreateNode(fileName, database.NodeTypeFile, &parentId, user.ID, &size, objectKey); err != nil {
+//		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+//			"error": "Database insert failed",
+//		})
+//		return
+//	}
+//
+//	c.JSON(200, gin.H{
+//		"msg": "File upload successfull",
+//	})
+//}
