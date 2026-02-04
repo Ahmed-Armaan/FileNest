@@ -15,8 +15,7 @@ const (
 
 // An index on ownerId, parentId, deletedAt: For active children fetch
 // A unique index on name, parentId, ownerId, deletedAt: To ensure unique siblings (excluding soft-deleted nodes)
-// A unique index on owner_id when parent_id is NULL to ensure only one root node per user
-// A partial index exist on id when type is directory and tagged as deleted for better performance during hard deletes
+// A unique index on owner_id when parent_id is NULL to ensure only one root node per user A partial index exist on id when type is directory and tagged as deleted for better performance during hard deletes
 type Node struct {
 	ID        uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	Name      string     `gorm:"not null;uniqueIndex:unique_siblings"`
@@ -36,4 +35,14 @@ type User struct {
 	UserName     string    `gorm:"not null"`
 	Email        string
 	ProfileImage string
+}
+
+type Share struct {
+	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	code      string    `gorm:"index:fetch_shred_nodes"`
+	NodeId    uuid.UUID
+	ownerId   uuid.UUID `gorm:"index"`
+	password  *string
+	CreatedAt time.Time
+	RevokedAt *time.Time `gorm:"index:fetch_shred_nodes"`
 }

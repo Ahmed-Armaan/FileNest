@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react"
-import type { DirectoryMetaData } from "../types/types"
-import SideBar from "./sideBar"
-import BreadCrumbs from "./BreadCrumbs"
 import { FileTreeNode } from "../utils/fileTree"
 import { useFileRefreshContext } from "../context/filesRefreshContext"
 import { FileUploadContextProvider } from "../context/FileUploadContext"
 import GridView from "./gridView"
+import SideBar from "./sideBar"
+import BreadCrumbs from "./BreadCrumbs"
+import type { DirectoryMetaData } from "../types/types"
+import type { Loaderdata } from "../utils/homeLoader"
+import { useLoaderData } from "react-router"
 
 export type TakenPath = {
 	dirName: string
@@ -29,6 +31,7 @@ function FileGrid() {
 	const [currView, setCurrView] = useState<number>(0)
 	const [rootNode, setRootNode] = useState<rootNodeRes | undefined>(undefined)
 	const { fileRefreshTrigger } = useFileRefreshContext()
+	const loaderData = useLoaderData() as Loaderdata
 
 	const currPathBack = () => {
 		if (currPath.length <= 1 || !FileTree || !FileTree.parent) return
@@ -71,8 +74,14 @@ function FileGrid() {
 
 	// fetch root dir data
 	useEffect(() => {
-		getRootNode()
-	}, [])
+		if (loaderData.mode === "normal") {
+			getRootNode()
+		} else if (loaderData.mode === "share" && loaderData.code) {
+			getSharedRoot(loaderData.code,)
+		} else {
+			// raise an error notification
+		}
+	}, [loaderData])
 
 	useEffect(() => {
 		const rootId = rootNode?.rootNodeId
@@ -100,6 +109,7 @@ function FileGrid() {
 			fetchChildElements(FileTree)
 	}, [currPath, fileRefreshTrigger])
 
+
 	const getRootNode = async () => {
 		if (rootNode) return
 		try {
@@ -118,6 +128,28 @@ function FileGrid() {
 		catch (err) {
 			console.log(err)
 		}
+	}
+
+	//type ShareFetchReq struct {
+	//	Code     string `json:"code"`
+	//	Password string `json:"password"`
+	//}
+	const getSharedRoot = async (code: string, password?: string) => {
+		try {
+			const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/root_node`, {
+				body: JSON.stringify({
+					code,
+					...(password && { password }),
+				}),
+			})
+
+			if (!res.ok) {
+				throw new Error("Failed to fetch")
+			}
+
+			const data = await res.json()
+		}
+		catch (err) { }
 	}
 
 	//fetch children 

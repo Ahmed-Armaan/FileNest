@@ -63,12 +63,34 @@ function GridView(props: GridViewProps) {
 		return () => document.removeEventListener("mousedown", handleMouseDown);
 	}, [menuNode]);
 
-	const handleShare = () => {
-		console.log("share", {
-			nodeId: menuNode?.nodeId,
-			password: sharePassword || null,
-		})
-		closeMenu()
+	const handleShare = async () => {
+		const nodeId = menuNode?.nodeId
+		const password = sharePassword || null
+
+		try {
+			const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/share`, {
+				method: "POST",
+				body: JSON.stringify({
+					nodeId: nodeId,
+					password: password,
+				}),
+				credentials: "include",
+			})
+
+			if (!res.ok) {
+				throw new Error("Request failed")
+			}
+
+			const data = await res.json()
+			const code = data.code
+
+		}
+		catch (err) {
+			console.log(err)
+		}
+		finally {
+			closeMenu()
+		}
 	};
 
 	const deleteNode = async (nodeId: string) => {

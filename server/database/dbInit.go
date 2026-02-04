@@ -21,6 +21,9 @@ type DatabaseStore interface {
 	GetUserByGoogleID(googleID string) (*User, error)
 	UserIDByGoogleIDQuery(googleId string, columns ...string) *gorm.DB
 	GetUserDataByGoogleId(googleId string, columns ...string) (*User, error)
+	ShareNode(nodeId uuid.UUID, password string) (string, error)
+	GetSharedPasswordStatus(code string) (bool, error)
+	GetSharedNode(code string, password ...string) ([]ChildData, error)
 }
 
 type DatabaseHolder struct {

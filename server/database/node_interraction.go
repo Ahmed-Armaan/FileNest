@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Ahmed-Armaan/FileNest/database/helper"
+	"github.com/Ahmed-Armaan/FileNest/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -20,6 +21,11 @@ type DeletedNodeData struct {
 	ID   uuid.UUID `json:"id"`
 	Type string    `json:"type"`
 }
+
+var (
+	ErrNoPasswordProvided = errors.New("No password provided")
+	ErrWrongPassword      = errors.New("Wrong password provided")
+)
 
 func (db *DatabaseHolder) CreateNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uuid.UUID, size *int64, objectKey ...string) error {
 	node := Node{
@@ -149,4 +155,69 @@ func (db *DatabaseHolder) ListDeletedNodes(count int) ([]DeletedNodeData, error)
 
 func (db *DatabaseHolder) DeleteNodePermanently(id uuid.UUID) error {
 	return db.DB.Delete(&Node{}, id).Error
+}
+
+func (db *DatabaseHolder) ShareNode(nodeId uuid.UUID, password string) (string, error) {
+	code, err := utils.GenerateCode(8)
+	if err != nil {
+		return "", errors.New("Failed to genberate code")
+	}
+
+	hashedPassWord, err := utils.HashAndSalt(password)
+	if err != nil {
+		return "", err
+	}
+
+	share := Share{
+		code:      code,
+		NodeId:    nodeId,
+		password:  &hashedPassWord,
+		RevokedAt: nil,
+	}
+
+	err = db.DB.Create(&share).Error
+	if err != nil {
+		return "", err
+	}
+	return code, nil
+}
+
+func (db *DatabaseHolder) GetSharedPasswordStatus(code string) (bool, error) {
+	shared_node := &Share{}
+	if err := db.DB.Model(&Share{}).
+		Select("password").
+		Where("code = ? AND revoked_at IS NULL").
+		Take(shared_node).Error; err != nil {
+		return true, err
+	}
+	return (shared_node.password != nil), nil
+}
+
+func (db *DatabaseHolder) GetSharedNode(code string, password ...string) ([]ChildData, error) {
+	var childData []ChildData
+	shared_node := &Share{}
+	if err := db.DB.Model(&Share{}).
+		Select("node_id, password").
+		Where("code = ? AND revoked_at IS NULL").
+		Take(shared_node).Error; err != nil {
+		return childData, err
+	}
+
+	if shared_node.password != nil {
+		if len(password) == 0 {
+			return childData, ErrNoPasswordProvided
+		}
+		if !utils.ComparePassword(*shared_node.password, password[0]) {
+			return childData, ErrWrongPassword
+		}
+	}
+
+	if err := db.DB.Model(&Node{}).
+		Select("id, name, type, updated_at").
+		Where("parent_id = ? and deleted_at IS NULL", shared_node.NodeId).
+		Find(&childData).Error; err != nil {
+		return childData, err
+	}
+
+	return childData, nil
 }

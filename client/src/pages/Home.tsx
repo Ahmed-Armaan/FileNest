@@ -1,11 +1,9 @@
 import { useEffect } from "react"
-import { useNavigate } from "react-router"
+import { useLoaderData, useNavigate } from "react-router"
 import { useUserInfoContext } from "../context/userInfoContext"
 import Header from "../components/header"
 import FileGrid from "../components/FileGrid"
 import { FilesRefreshContextprovided } from "../context/filesRefreshContext"
-
-// TODO: fetch the file tree, create context for breadcrums and the UI
 
 function Home() {
 	const navigate = useNavigate()
