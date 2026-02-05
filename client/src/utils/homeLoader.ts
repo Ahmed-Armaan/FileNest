@@ -8,10 +8,10 @@ export type Loaderdata = {
 }
 
 export async function HomeLoader({ params }: LoaderFunctionArgs): Promise<Loaderdata> {
-	if (params.share_code) {
+	if (params.share_id) {
 		return {
 			mode: "share",
-			code: params.share_code,
+			code: params.share_id,
 		}
 	}
 	else {

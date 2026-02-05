@@ -39,10 +39,10 @@ type User struct {
 
 type Share struct {
 	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	code      string    `gorm:"index:fetch_shred_nodes"`
+	Code      string    `gorm:"index:fetch_shred_nodes"`
 	NodeId    uuid.UUID
-	ownerId   uuid.UUID `gorm:"index"`
-	password  *string
+	OwnerId   uuid.UUID `gorm:"index"`
+	Password  *string
 	CreatedAt time.Time
 	RevokedAt *time.Time `gorm:"index:fetch_shred_nodes"`
 }

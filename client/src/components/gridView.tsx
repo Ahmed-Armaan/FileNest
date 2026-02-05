@@ -10,6 +10,8 @@ import {
 import type { TakenPath } from "./FileGrid";
 import { DownloadFile } from "../utils/download";
 import { useFileRefreshContext } from "../context/filesRefreshContext";
+import { useNotification } from "../context/notificationContext";
+import { NotificationTypes } from "./notificationPanel";
 
 interface GridViewProps {
 	fileTree: FileTreeNode;
@@ -24,6 +26,7 @@ function GridView(props: GridViewProps) {
 	const [sharePassword, setSharePassword] = useState("")
 	const justOpenedRef = useRef(false);
 	const { triggerFilesRefresh } = useFileRefreshContext()
+	const showNotification = useNotification()
 
 	const handleDirectoryClick = (node: FileTreeNode) => {
 		props.AlterFileNode(node);
@@ -68,7 +71,7 @@ function GridView(props: GridViewProps) {
 		const password = sharePassword || null
 
 		try {
-			const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/share`, {
+			const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/share`, {
 				method: "POST",
 				body: JSON.stringify({
 					nodeId: nodeId,
@@ -83,7 +86,10 @@ function GridView(props: GridViewProps) {
 
 			const data = await res.json()
 			const code = data.code
-
+			showNotification({
+				message: `The ${menuNode?.nodeType} ${menuNode?.nodeName} is shared at : ${import.meta.env.VITE_FRONTEND_URL}/share/${code}`,
+				notificationType: NotificationTypes.sharedConfirmation,
+			})
 		}
 		catch (err) {
 			console.log(err)

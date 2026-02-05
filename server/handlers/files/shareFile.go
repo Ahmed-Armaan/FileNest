@@ -2,10 +2,12 @@ package files
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
+	"github.com/Ahmed-Armaan/FileNest/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -49,7 +51,15 @@ func ShareNode(db database.DatabaseStore) gin.HandlerFunc {
 			return
 		}
 
-		code, err := db.ShareNode(nodeIdUUID, shareReq.Password)
+		googleId, err := utils.GoogleIdstring(c)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": err,
+			})
+			return
+		}
+
+		code, err := db.ShareNode(nodeIdUUID, shareReq.Password, googleId)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": "database error",
@@ -113,8 +123,7 @@ func GetSharedRootNode(db database.DatabaseStore) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(200, gin.H{
-			"data": sharedFiles,
-		})
+		fmt.Printf("sharedFIles = \n%+v\n", sharedFiles)
+		c.JSON(200, sharedFiles)
 	}
 }

@@ -38,7 +38,7 @@ func setConstraints(db *gorm.DB) error {
 
 	// index all revoked shared nodes, for better performance while hard deleting
 	if err := db.Exec(`CREATE INDEX IF NOT EXISTS deleted_sharing_nodes
-	ON share (id)
+	ON shares (id)
 	WHERE revoked_at IS NOT NULL`).Error; err != nil {
 		return err
 	}

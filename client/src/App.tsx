@@ -19,10 +19,10 @@ const router = createBrowserRouter([
 		element: <Home />,
 		loader: HomeLoader,
 	},
-	{
+	/*{
 		path: "*",
 		element: <LandingPage />
-	}
+	}*/
 ])
 
 function App() {

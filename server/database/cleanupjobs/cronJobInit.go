@@ -10,7 +10,7 @@ import (
 
 func CronInit(db database.DatabaseStore, s storage.StorageStore) {
 	c := cron.New()
-	c.AddFunc("0 */2 * * *", DeleterCron(db, s))
+	c.AddFunc("0 0 */2 * * *", DeleterCron(db, s))
 	c.Start()
 }
 

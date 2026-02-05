@@ -157,7 +157,7 @@ func (db *DatabaseHolder) DeleteNodePermanently(id uuid.UUID) error {
 	return db.DB.Delete(&Node{}, id).Error
 }
 
-func (db *DatabaseHolder) ShareNode(nodeId uuid.UUID, password string) (string, error) {
+func (db *DatabaseHolder) ShareNode(nodeId uuid.UUID, password string, googleId string) (string, error) {
 	code, err := utils.GenerateCode(8)
 	if err != nil {
 		return "", errors.New("Failed to genberate code")
@@ -168,10 +168,16 @@ func (db *DatabaseHolder) ShareNode(nodeId uuid.UUID, password string) (string, 
 		return "", err
 	}
 
+	user, err := db.GetUserDataByGoogleId(googleId, UserDbColums.ID)
+	if err != nil {
+		return "", err
+	}
+
 	share := Share{
-		code:      code,
+		Code:      code,
 		NodeId:    nodeId,
-		password:  &hashedPassWord,
+		OwnerId:   user.ID,
+		Password:  &hashedPassWord,
 		RevokedAt: nil,
 	}
 
@@ -186,35 +192,62 @@ func (db *DatabaseHolder) GetSharedPasswordStatus(code string) (bool, error) {
 	shared_node := &Share{}
 	if err := db.DB.Model(&Share{}).
 		Select("password").
-		Where("code = ? AND revoked_at IS NULL").
+		Where("code = ? AND revoked_at IS NULL", code).
 		Take(shared_node).Error; err != nil {
 		return true, err
 	}
-	return (shared_node.password != nil), nil
+	return (shared_node.Password != nil), nil
 }
 
 func (db *DatabaseHolder) GetSharedNode(code string, password ...string) ([]ChildData, error) {
 	var childData []ChildData
-	shared_node := &Share{}
+	sharedNode := &Share{}
+
 	if err := db.DB.Model(&Share{}).
 		Select("node_id, password").
-		Where("code = ? AND revoked_at IS NULL").
-		Take(shared_node).Error; err != nil {
+		Where("code = ? AND revoked_at IS NULL", code).
+		Take(sharedNode).Error; err != nil {
 		return childData, err
 	}
 
-	if shared_node.password != nil {
+	if sharedNode.Password != nil {
 		if len(password) == 0 {
 			return childData, ErrNoPasswordProvided
 		}
-		if !utils.ComparePassword(*shared_node.password, password[0]) {
+		if !utils.ComparePassword(*sharedNode.Password, password[0]) {
 			return childData, ErrWrongPassword
 		}
 	}
 
+	type nodeMeta struct {
+		Type string
+	}
+
+	var meta nodeMeta
+	if err := db.DB.Model(&Node{}).
+		Select("type").
+		Where("id = ? AND deleted_at IS NULL", sharedNode.NodeId).
+		Take(&meta).Error; err != nil {
+		return childData, err
+	}
+
+	if meta.Type == string(NodeTypeFile) {
+		var node ChildData
+
+		if err := db.DB.Model(&Node{}).
+			Select("id, name, type, updated_at").
+			Where("id = ? AND deleted_at IS NULL", sharedNode.NodeId).
+			Take(&node).Error; err != nil {
+			return childData, err
+		}
+
+		childData = []ChildData{node}
+		return childData, nil
+	}
+
 	if err := db.DB.Model(&Node{}).
 		Select("id, name, type, updated_at").
-		Where("parent_id = ? and deleted_at IS NULL", shared_node.NodeId).
+		Where("parent_id = ? AND deleted_at IS NULL", sharedNode.NodeId).
 		Find(&childData).Error; err != nil {
 		return childData, err
 	}

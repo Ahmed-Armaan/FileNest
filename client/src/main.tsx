@@ -8,9 +8,9 @@ import App from './App.tsx'
 createRoot(document.getElementById('root')!).render(
 	<NotificationContextProvider>
 		<UserInfoContextProvider>
-			<StrictMode>
-				<App />
-			</StrictMode>
+			{/*	<StrictMode>
+			</StrictMode>*/}
+			<App />
 		</UserInfoContextProvider>
 	</NotificationContextProvider>
 )

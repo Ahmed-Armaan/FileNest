@@ -21,7 +21,7 @@ type DatabaseStore interface {
 	GetUserByGoogleID(googleID string) (*User, error)
 	UserIDByGoogleIDQuery(googleId string, columns ...string) *gorm.DB
 	GetUserDataByGoogleId(googleId string, columns ...string) (*User, error)
-	ShareNode(nodeId uuid.UUID, password string) (string, error)
+	ShareNode(nodeId uuid.UUID, password string, googleId string) (string, error)
 	GetSharedPasswordStatus(code string) (bool, error)
 	GetSharedNode(code string, password ...string) ([]ChildData, error)
 }
@@ -39,7 +39,7 @@ func DbInit() (DatabaseStore, error) {
 		return databaseStore, err
 	}
 
-	if err := db.AutoMigrate(&User{}, &Node{}); err != nil {
+	if err := db.AutoMigrate(&User{}, &Node{}, &Share{}); err != nil {
 		return databaseStore, err
 	}
 
