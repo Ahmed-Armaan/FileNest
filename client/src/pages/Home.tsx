@@ -1,17 +1,19 @@
 import { useEffect } from "react"
-import { useNavigate } from "react-router"
+import { useLoaderData, useNavigate } from "react-router"
 import { useUserInfoContext } from "../context/userInfoContext"
 import Header from "../components/header"
 import FileGrid from "../components/FileGrid"
 import { FilesRefreshContextprovided } from "../context/filesRefreshContext"
-
-// TODO: fetch the file tree, create context for breadcrums and the UI
+import type { Loaderdata } from "../utils/homeLoader"
 
 function Home() {
 	const navigate = useNavigate()
 	const { setUser, clearUser } = useUserInfoContext()
+	const loaderData = useLoaderData() as Loaderdata
 
 	useEffect(() => {
+		console.log(loaderData.mode)
+		if (loaderData.mode === "share") return
 		loadUser()
 	}, [])
 

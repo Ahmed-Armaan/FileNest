@@ -9,7 +9,6 @@ function LandingPage() {
 	const [loginError, setLoginError] = useState(false)
 	const navigate = useNavigate()
 	const [searchParams] = useSearchParams()
-
 	const { clearUser } = useUserInfoContext()
 
 	useEffect(() => {

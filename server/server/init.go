@@ -56,6 +56,14 @@ func Run(db database.DatabaseStore, s storage.StorageStore) error {
 	// Body: []CompletedPartsData
 	api.POST("/complete_upload", files.CompleteUpload(db, s))
 
+	api.POST("/share", files.ShareNode(db))
+
+	// This route is on the r group because share is free from user constraint;
+	// Shared files can be accecssed by anyone irrespective of logon status. Thus jwt middleware is not used here
+	r.POST("/get_share", files.GetSharedRootNode(db))
+
+	r.GET("/shared_password_status", files.GetSharedPasswordStatus(db))
+
 	// DELETE /deelete?nodeId=...
 	// deleted a node in file tree
 	api.DELETE("/delete", files.DeleteNode(db))
@@ -66,7 +74,7 @@ func Run(db database.DatabaseStore, s storage.StorageStore) error {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "9000"
+		port = "3000"
 	}
 
 	err := r.Run(":" + port)

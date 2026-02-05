@@ -12,10 +12,10 @@ func setConstraints(db *gorm.DB) error {
 		return err
 	}
 
-	// index all soft deleted directories, for better performance while hard deleting
+	// index all soft deleted nodes, for better performance while hard deleting
 	if err := db.Exec(`CREATE INDEX IF NOT EXISTS deleted_nodes
 	ON nodes (id)
-	WHERE deleted_at IS NOT NULL AND type = 'directory';`).Error; err != nil {
+	WHERE deleted_at IS NOT NULL`).Error; err != nil {
 		return err
 	}
 
@@ -33,6 +33,13 @@ func setConstraints(db *gorm.DB) error {
 	NULL;
 	END $$;
 	`).Error; err != nil {
+		return err
+	}
+
+	// index all revoked shared nodes, for better performance while hard deleting
+	if err := db.Exec(`CREATE INDEX IF NOT EXISTS deleted_sharing_nodes
+	ON shares (id)
+	WHERE revoked_at IS NOT NULL`).Error; err != nil {
 		return err
 	}
 
