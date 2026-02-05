@@ -7,6 +7,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
+	"github.com/Ahmed-Armaan/FileNest/database/cleanupjobs"
 	"github.com/Ahmed-Armaan/FileNest/server"
 	"github.com/Ahmed-Armaan/FileNest/storage"
 	"github.com/Ahmed-Armaan/FileNest/utils"
@@ -18,11 +19,13 @@ func main() {
 		fmt.Println("No .env found, relying on enviornment variables") // in production .env is not present
 	}
 
-	if err := database.DbInit(); err != nil {
+	databaseStore, err := database.DbInit()
+	if err != nil {
 		log.Fatalln(err)
 	}
 
-	if err := storage.S3Init(); err != nil {
+	storageStore, err := storage.S3Init()
+	if err != nil {
 		log.Fatalln(err)
 	}
 
@@ -30,7 +33,9 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	if err := server.Run(); err != nil {
+	cleanupjobs.CronInit(databaseStore, storageStore)
+
+	if err := server.Run(databaseStore, storageStore); err != nil {
 		log.Fatalln(err)
 	}
 }

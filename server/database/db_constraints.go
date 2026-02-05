@@ -1,7 +1,6 @@
 package database
 
 import (
-	//"github.com/Ahmed-Armaan/FileNest/database/helper"
 	"gorm.io/gorm"
 )
 
@@ -10,6 +9,13 @@ func setConstraints(db *gorm.DB) error {
 	if err := db.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS uniq_root_per_user
 		ON nodes (owner_id)
 		WHERE parent_id IS NULL;`).Error; err != nil {
+		return err
+	}
+
+	// index all soft deleted directories, for better performance while hard deleting
+	if err := db.Exec(`CREATE INDEX IF NOT EXISTS deleted_nodes
+	ON nodes (id)
+	WHERE deleted_at IS NOT NULL AND type = 'directory';`).Error; err != nil {
 		return err
 	}
 
@@ -29,15 +35,6 @@ func setConstraints(db *gorm.DB) error {
 	`).Error; err != nil {
 		return err
 	}
-	//if err := db.Exec(`ALTER TABLE nodes
-	//ADD CONSTRAINT objectkey_null_for_dir CHECK(
-	//	(type = 'file' AND object_key IS NOT NULL) OR
-	//	(type = 'directory' AND object_key IS NULL)
-	//);`).Error; err != nil {
-	//	if helper.ResolvePostgresError(err) != helper.ErrDuplicateObject {
-	//		return err
-	//	}
-	//}
 
 	return nil
 }

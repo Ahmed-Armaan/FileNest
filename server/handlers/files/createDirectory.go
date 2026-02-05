@@ -9,45 +9,39 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateDirectory(c *gin.Context) {
-	dirName := c.Query("dirName")
-	parentIdstr := c.Query("parentId")
-	parentIdUUID, err := uuid.Parse(parentIdstr)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"error": "invalid parentId",
-		})
-		return
-	}
+func CreateDirectory(db database.DatabaseStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		dirName := c.Query("dirName")
+		parentIdstr := c.Query("parentId")
+		parentIdUUID, err := uuid.Parse(parentIdstr)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": "invalid parentId",
+			})
+			return
+		}
 
-	//user, err := utils.GetUserFromGoogleId(c)
-	//if err != nil {
-	//	c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-	//		"error": err,
-	//	})
-	//	return
-	//}
+		googleId, err := utils.GoogleIdstring(c)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": err,
+			})
+			return
+		}
 
-	googleId, err := utils.GoogleIdstring(c)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": err,
-		})
-		return
-	}
+		user, err := db.GetUserDataByGoogleId(googleId, database.UserDbColums.ID)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": err,
+			})
+			return
+		}
 
-	user, err := database.GetUserDataByGoogleId(googleId, database.UserDbColums.ID)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": err,
-		})
-		return
-	}
-
-	if err := database.InsertNode(dirName, database.NodeTypeDirectory, &parentIdUUID, user.ID, nil); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-			"error": "Database error",
-		})
-		return
+		if err := db.CreateNode(dirName, database.NodeTypeDirectory, &parentIdUUID, user.ID, nil); err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": "Database error",
+			})
+			return
+		}
 	}
 }

@@ -16,12 +16,18 @@ type ChildData struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-func InsertNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uuid.UUID, size *int64, objectKey ...string) error {
+type DeletedNodeData struct {
+	ID   uuid.UUID `json:"id"`
+	Type string    `json:"type"`
+}
+
+func (db *DatabaseHolder) CreateNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uuid.UUID, size *int64, objectKey ...string) error {
 	node := Node{
-		Name:     name,
-		Type:     string(nodeType),
-		ParentID: parentId,
-		OwnerID:  ownerId,
+		Name:      name,
+		Type:      string(nodeType),
+		ParentID:  parentId,
+		OwnerID:   ownerId,
+		DeletedAt: nil,
 	}
 
 	if nodeType == NodeTypeDirectory {
@@ -32,7 +38,7 @@ func InsertNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uui
 		node.SizeBytes = size
 	}
 
-	if err := DB.Create(&node).Error; err != nil {
+	if err := db.DB.Create(&node).Error; err != nil {
 		if helper.ResolvePostgresError(err) == helper.ErrUniqueViolation {
 			return errors.New("duplicate node")
 		}
@@ -42,52 +48,41 @@ func InsertNode(name string, nodeType NodeType, parentId *uuid.UUID, ownerId uui
 	return nil
 }
 
-// insert root node for new users, part of a transaction
-func insertRootNode(tx *gorm.DB, ownerId uuid.UUID) error {
-	if err := tx.Create(&Node{
+// private helper — receiver optional, but this is cleaner
+func (db *DatabaseHolder) insertRootNode(tx *gorm.DB, ownerId uuid.UUID) error {
+	return tx.Create(&Node{
 		Name:      "/",
 		Type:      string(NodeTypeDirectory),
 		ParentID:  nil,
 		OwnerID:   ownerId,
 		ObjectKey: nil,
 		SizeBytes: nil,
-	}).Error; err != nil {
-		return err
-	}
-
-	return nil
+	}).Error
 }
 
-func GetRootNodeId(googleId string) (*Node, error) {
+func (db *DatabaseHolder) GetRootNode(googleId string) (*Node, error) {
 	var nodeData Node
+	subQuery := db.UserIDByGoogleIDQuery(googleId)
 
-	subQuery := GetUserIdByGoogleIdSubQuery(googleId)
-
-	err := DB.Model(&Node{}).
+	if err := db.DB.Model(&Node{}).
 		Select("id, updated_at").
-		Where(
-			"owner_id = (?)",
-			gorm.Expr("(?)", subQuery),
-		).
-		Where("parent_id IS NULL").
-		Take(&nodeData).
-		Error
-
-	if err != nil {
+		Where("owner_id = (?) AND parent_id IS NULL", subQuery).
+		Take(&nodeData).Error; err != nil {
 		return nil, err
 	}
 
 	return &nodeData, nil
 }
 
-func GetAllChild(parentId *uuid.UUID, googleId string) ([]ChildData, error) {
+func (db *DatabaseHolder) ListChildren(parentId *uuid.UUID, googleId string) ([]ChildData, error) {
 	var children []ChildData
 
-	query := DB.Model(&Node{}).
+	query := db.DB.Model(&Node{}).
 		Select("id, name, type, updated_at").
 		Where(
-			"owner_id = (?)",
-			GetUserIdByGoogleIdSubQuery(googleId, UserDbColums.ID))
+			"owner_id = (?) AND deleted_at IS NULL",
+			db.UserIDByGoogleIDQuery(googleId, UserDbColums.ID),
+		)
 
 	if parentId == nil {
 		query = query.Where("parent_id IS NULL")
@@ -102,15 +97,56 @@ func GetAllChild(parentId *uuid.UUID, googleId string) ([]ChildData, error) {
 	return children, nil
 }
 
-func GetObjectKey_Size_Name(Id uuid.UUID) (*Node, error) {
+func (db *DatabaseHolder) ListChildrenForDeletion(parentId *uuid.UUID) ([]ChildData, error) {
+	var children []ChildData
+
+	if err := db.DB.Model(&Node{}).
+		Select("id", "type").
+		Where("parent_id = ?", parentId).
+		Find(&children).Error; err != nil {
+		return children, err
+	}
+
+	return children, nil
+}
+
+func (db *DatabaseHolder) GetNodeObjectInfo(id uuid.UUID) (*Node, error) {
 	node := Node{}
 
-	if err := DB.Model(&Node{}).
+	if err := db.DB.Model(&Node{}).
 		Select("object_key, size_bytes, name").
-		Where("id = ?", Id).
+		Where("id = ?", id).
 		Take(&node).Error; err != nil {
 		return &node, err
 	}
 
 	return &node, nil
+}
+
+func (db *DatabaseHolder) MarkNodeDeleted(googleId string, nodeId uuid.UUID) error {
+	subQuery := db.UserIDByGoogleIDQuery(googleId, UserDbColums.ID)
+
+	return db.DB.Model(&Node{}).
+		Where("id = ? AND owner_id = (?)", nodeId, subQuery).
+		Update("deleted_at", time.Now()).
+		Error
+}
+
+func (db *DatabaseHolder) ListDeletedNodes(count int) ([]DeletedNodeData, error) {
+	deletedNodes := []DeletedNodeData{}
+
+	if err := db.DB.Model(&Node{}).
+		Select("id, type").
+		Where("deleted_at IS NOT NULL").
+		Limit(count).
+		Find(&deletedNodes).
+		Error; err != nil {
+		return deletedNodes, err
+	}
+
+	return deletedNodes, nil
+}
+
+func (db *DatabaseHolder) DeleteNodePermanently(id uuid.UUID) error {
+	return db.DB.Delete(&Node{}, id).Error
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
+	"github.com/Ahmed-Armaan/FileNest/database"
 	"github.com/Ahmed-Armaan/FileNest/handlers"
 	"github.com/Ahmed-Armaan/FileNest/handlers/auth"
 	"github.com/Ahmed-Armaan/FileNest/handlers/files"
@@ -13,7 +14,7 @@ import (
 	"github.com/Ahmed-Armaan/FileNest/storage"
 )
 
-func Run() error {
+func Run(db database.DatabaseStore, s storage.StorageStore) error {
 	r := gin.Default()
 
 	// cors.DefaultConfig()
@@ -31,37 +32,37 @@ func Run() error {
 
 	api := r.Group("/api")
 	api.Use(middleware.VerifyJwt())
-	api.GET("/me", handlers.Me) // provide user their data
+	api.GET("/me", handlers.Me(db)) // provide user their data
 
 	// returns root node id and updated at
-	api.GET("/root_node", files.GetRootDirId)
+	api.GET("/root_node", files.GetRootDirId(db))
 
 	// GET /get_elements?parentId=...
 	// Returns children of a directory
-	api.GET("/get_elements", files.GetCurrDirElements)
+	api.GET("/get_elements", files.GetCurrDirElements(db))
 
 	// PUT /create_directory?parentId=...&dirName=...
 	// Creates a new directory under parent
-	api.PUT("/create_directory", files.CreateDirectory)
-
-	// POST /complete_upload?name=...&objectKey=...&uploadId=...
-	// Body: []CompletedPartsData
-	api.POST("/complete_upload", storage.CompleteUpload)
+	api.PUT("/create_directory", files.CreateDirectory(db))
 
 	// POST used to prevent caching of time-limited upload URLs
-	api.POST("/get_upload_url", storage.GetNewUploadUrl)
+	api.POST("/get_upload_url", s.GetNewUploadUrl)
 
 	// POST /get_upload_url/parts?uploadId=...&objectKey=...&partNumber=...
 	// Returns a presigned URL for a single multipart upload part
-	api.POST("/get_upload_url/parts", storage.GetUploadUrl)
+	api.POST("/get_upload_url/parts", s.GetUploadUrl)
+
+	// POST /complete_upload?name=...&objectKey=...&uploadId=...
+	// Body: []CompletedPartsData
+	api.POST("/complete_upload", files.CompleteUpload(db, s))
+
+	// DELETE /deelete?nodeId=...
+	// deleted a node in file tree
+	api.DELETE("/delete", files.DeleteNode(db))
 
 	// POST /start_download?fileId=...
 	// Resolves fileId to objectKey, size and name
-	api.POST("/start_download", storage.DownloadInit)
-
-	// POST /get_download_url/parts?objectKey=...&partNumber=...
-	// Returns a presigned URL for downloading a file part
-	//api.POST("/get_download_url/parts", storage.GetDownloadUrl)
+	api.POST("/start_download", s.DownloadInit(db))
 
 	port := os.Getenv("PORT")
 	if port == "" {
