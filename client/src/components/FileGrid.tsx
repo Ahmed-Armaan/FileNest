@@ -86,7 +86,7 @@ function FileGrid() {
 
 			if (loaderData.mode === "share" && loaderData.code) {
 				const needsPassword = await getPasswordStatus(loaderData.code)
-				if (needsPassword) {
+				if (needsPassword === null) {
 					ShowPasswordInput(true)
 				} else {
 					getSharedRoot(loaderData.code)

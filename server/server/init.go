@@ -29,6 +29,7 @@ func Run(db database.DatabaseStore, s storage.StorageStore) error {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
 	r.GET("/auth/callback", auth.GetCredentials)
+	r.GET("/test_user", handlers.Test_user)
 
 	api := r.Group("/api")
 	api.Use(middleware.VerifyJwt())
