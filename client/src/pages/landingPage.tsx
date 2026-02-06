@@ -29,17 +29,18 @@ function LandingPage() {
 				if (res.status === 200) {
 					navigate("/home")
 				}
-			} catch (err) {
+			} catch {
 				clearUser()
 			}
 		}
 
 		checkLogin()
-	},)
+	})
 
 	const loginWithGoogle = () => {
 		const url = new URL("https://accounts.google.com/o/oauth2/v2/auth")
 		const scope = import.meta.env.VITE_OAUTH_SCOPE
+
 		url.searchParams.append("client_id", import.meta.env.VITE_OAUTH_CLIENT_ID)
 		url.searchParams.append("redirect_uri", import.meta.env.VITE_OAUTH_REDIRECT_URI)
 		url.searchParams.append("response_type", "code")
@@ -48,6 +49,10 @@ function LandingPage() {
 		url.searchParams.append("prompt", "consent")
 
 		window.location.href = url.toString()
+	}
+
+	const continueAsTestUser = () => {
+		window.location.href = `${import.meta.env.VITE_BACKEND_URL}/test_user`
 	}
 
 	return (
@@ -65,10 +70,30 @@ function LandingPage() {
 						Store, organize, access, and share your files through a virtual file system.
 					</p>
 
-					<GoogleButton label="Continue with Google" onClick={loginWithGoogle} />
+					<div className="flex flex-col gap-3 w-full items-center">
+						<GoogleButton
+							label="Continue with Google"
+							onClick={loginWithGoogle}
+						/>
+
+						<button
+							onClick={continueAsTestUser}
+							className="
+								w-full rounded-lg px-3 py-2 text-sm
+								border transition hover:opacity-90
+							"
+							style={{
+								borderColor: "var(--border-primary)",
+								color: "var(--text-secondary)",
+								background: "transparent",
+							}}
+						>
+							Continue as test user
+						</button>
+					</div>
 
 					{loginError && (
-						<div className="text-red-400 text-sm">
+						<div className="text-sm" style={{ color: "var(--error)" }}>
 							Could not login, please try again
 						</div>
 					)}

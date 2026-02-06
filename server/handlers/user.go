@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/Ahmed-Armaan/FileNest/database"
 	"github.com/Ahmed-Armaan/FileNest/utils"
@@ -32,4 +33,26 @@ func Me(db database.DatabaseStore) gin.HandlerFunc {
 			"email":   user.Email,
 		})
 	}
+}
+
+func Test_user(c *gin.Context) {
+	frontendUrl := os.Getenv("FRONTEND_URI")
+	googleId := os.Getenv("TEST_GOOGLE_ID")
+	jwtToken, err := utils.SignJwt(googleId)
+	if err != nil {
+		c.Redirect(302, frontendUrl+"/?error=response_construction_error")
+		return
+	}
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "session",
+		Value:    jwtToken,
+		Path:     "/",
+		MaxAge:   60 * 60 * 24 * 7,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	})
+
+	c.Redirect(303, frontendUrl+"/home")
 }
