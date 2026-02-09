@@ -2,7 +2,6 @@ package files
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -123,7 +122,30 @@ func GetSharedRootNode(db database.DatabaseStore) gin.HandlerFunc {
 			return
 		}
 
-		fmt.Printf("sharedFIles = \n%+v\n", sharedFiles)
 		c.JSON(200, sharedFiles)
+	}
+}
+
+func GetSharedFilesList(db database.DatabaseStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		googleId, err := utils.GoogleIdstring(c)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to resolve user",
+			})
+			return
+		}
+
+		var sharedNodes []database.SharedNode
+
+		sharedNodes, err = db.GetAllSharedNodes(googleId)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": "database error",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, sharedNodes)
 	}
 }

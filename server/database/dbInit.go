@@ -24,6 +24,7 @@ type DatabaseStore interface {
 	ShareNode(nodeId uuid.UUID, password string, googleId string) (string, error)
 	GetSharedPasswordStatus(code string) (bool, error)
 	GetSharedNode(code string, password ...string) ([]ChildData, error)
+	GetAllSharedNodes(googleId string) ([]SharedNode, error)
 }
 
 type DatabaseHolder struct {
