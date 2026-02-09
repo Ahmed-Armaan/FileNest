@@ -4,6 +4,7 @@ import UploadFile from "../utils/upload";
 import { useFileUploadContext, type FileUploadStatus } from "../context/FileUploadContext";
 import { useFileRefreshContext } from "../context/filesRefreshContext";
 import { FiCheck, FiX } from "react-icons/fi";
+import { SharedList } from "./sharedList";
 
 function SideBar(props: { currDirId: string }) {
 	const { addFile, removeFile, setUploadData, setUploadedSize } = useFileUploadContext()
@@ -25,8 +26,6 @@ function SideBar(props: { currDirId: string }) {
 	}, [startUpload])
 
 	const createDirectory = async (dirName: string) => {
-		// PUT /create_directory?parentId=...&dirName=...
-		// Creates a new directory under parent
 		const reqUrl = new URL(`${import.meta.env.VITE_BACKEND_URL}/api/create_directory`)
 		reqUrl.searchParams.set("dirName", dirName)
 		reqUrl.searchParams.set("parentId", props.currDirId)
@@ -112,6 +111,11 @@ function SideBar(props: { currDirId: string }) {
 						</button>
 					</div>
 				)}
+
+			</div>
+			<SharedList />
+			<div>
+
 			</div>
 		</div>
 	)

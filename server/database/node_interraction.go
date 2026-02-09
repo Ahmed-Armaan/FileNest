@@ -22,6 +22,13 @@ type DeletedNodeData struct {
 	Type string    `json:"type"`
 }
 
+type SharedNode struct {
+	Id   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	Type NodeType  `json:"type"`
+	Code string    `json:"code"`
+}
+
 var (
 	ErrNoPasswordProvided = errors.New("No password provided")
 	ErrWrongPassword      = errors.New("Wrong password provided")
@@ -54,7 +61,7 @@ func (db *DatabaseHolder) CreateNode(name string, nodeType NodeType, parentId *u
 	return nil
 }
 
-// private helper — receiver optional, but this is cleaner
+// create root nood, executed inside the user creation transaction
 func (db *DatabaseHolder) insertRootNode(tx *gorm.DB, ownerId uuid.UUID) error {
 	return tx.Create(&Node{
 		Name:      "/",
@@ -253,4 +260,21 @@ func (db *DatabaseHolder) GetSharedNode(code string, password ...string) ([]Chil
 	}
 
 	return childData, nil
+}
+
+func (db *DatabaseHolder) GetAllSharedNodes(googleId string) ([]SharedNode, error) {
+	var sharedNodes []SharedNode
+	user, err := db.GetUserDataByGoogleId(googleId, UserDbColums.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.DB.Model(&Share{}).
+		Select("nodes.id, nodes.name, nodes.type, shares.code").
+		Joins("JOIN nodes ON nodes.id = shares.node_id").
+		Where("shares.owner_id = ?", user.ID).
+		Scan(&sharedNodes).Error; err != nil {
+		return nil, err
+	}
+	return sharedNodes, nil
 }
