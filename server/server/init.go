@@ -61,6 +61,8 @@ func Run(db database.DatabaseStore, s storage.StorageStore) error {
 
 	api.GET("/all_shared", files.GetSharedFilesList(db))
 
+	api.GET("/remove_shared", files.StopSharing(db))
+
 	// This route is on the r group because share is free from user constraint;
 	// Shared files can be accecssed by anyone irrespective of logon status. Thus jwt middleware is not used here
 	r.POST("/get_share", files.GetSharedRootNode(db))

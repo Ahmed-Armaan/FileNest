@@ -25,6 +25,7 @@ type DatabaseStore interface {
 	GetSharedPasswordStatus(code string) (bool, error)
 	GetSharedNode(code string, password ...string) ([]ChildData, error)
 	GetAllSharedNodes(googleId string) ([]SharedNode, error)
+	RemoveSharedNode(googleId string, nodeId string) error
 }
 
 type DatabaseHolder struct {

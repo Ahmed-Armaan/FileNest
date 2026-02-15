@@ -149,3 +149,25 @@ func GetSharedFilesList(db database.DatabaseStore) gin.HandlerFunc {
 		c.JSON(http.StatusOK, sharedNodes)
 	}
 }
+
+func StopSharing(db database.DatabaseStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		googleId, err := utils.GoogleIdstring(c)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": "no googleId provided",
+			})
+			return
+		}
+		nodeId := c.Query("nodeId")
+
+		if err := db.RemoveSharedNode(googleId, nodeId); err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": "database error",
+			})
+			return
+		}
+
+		c.Status(200)
+	}
+}
