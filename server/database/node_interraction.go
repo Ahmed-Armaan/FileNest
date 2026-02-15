@@ -272,9 +272,19 @@ func (db *DatabaseHolder) GetAllSharedNodes(googleId string) ([]SharedNode, erro
 	if err := db.DB.Model(&Share{}).
 		Select("nodes.id, nodes.name, nodes.type, shares.code").
 		Joins("JOIN nodes ON nodes.id = shares.node_id").
-		Where("shares.owner_id = ?", user.ID).
+		Where("shares.owner_id = ? AND shares.revoked_at IS NULL", user.ID).
 		Scan(&sharedNodes).Error; err != nil {
 		return nil, err
 	}
 	return sharedNodes, nil
+}
+
+func (db *DatabaseHolder) RemoveSharedNode(googleId string, nodeId string) error {
+	if err := db.DB.Model(&Share{}).Where("owner_id = (?) AND node_id = ?",
+		db.UserIDByGoogleIDQuery(googleId, UserDbColums.ID),
+		nodeId,
+	).Update("revoked_at", time.Now()).Error; err != nil {
+		return err
+	}
+	return nil
 }
